@@ -50,7 +50,7 @@ export default async function LoginPage({
           <div className="mb-6 space-y-1">
             <h1 className="text-xl font-semibold">Connexion</h1>
             <p className="text-sm text-muted-foreground">
-              Entre ton email pour recevoir un lien de connexion.
+              Connecte-toi avec ton email et ton mot de passe.
             </p>
           </div>
           <LoginForm redirectTo={redirectTo} />

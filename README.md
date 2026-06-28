@@ -66,17 +66,16 @@ supabase migration new <nom>           # crée une nouvelle migration
 
 ## Authentification & rôles
 
-- Connexion par **lien magique** (email, sans mot de passe).
+- Connexion par **email + mot de passe** (création de compte directe sur `/login`).
+- ⚠️ Pour une inscription **sans lien de confirmation**, désactiver la confirmation d'email :
+  Dashboard Supabase → **Authentication → Providers → Email** → décocher **Confirm email**.
+  (Sinon, un email de confirmation est envoyé à l'inscription.)
 - Rôles : **Skalesy admin**, **client**, **prestataire** (avec son domaine) — sécurisés par
   **RLS Postgres**.
 - L'accès est contrôlé par la table `allowed_members` : un email doit y figurer pour obtenir
   un rôle. `contact@hassankaid.com` est pré-configuré en **Skalesy admin**.
 - Ajouter le client et les prestataires : page **Administration** (réservée à l'admin), ou en
-  SQL via `allowed_members`. Le rôle est attribué à leur **première connexion**.
-
-Dans le **Dashboard Supabase → Authentication → URL Configuration** :
-- **Site URL** = `http://localhost:3000` en local, l'URL Vercel en production.
-- Ajouter les **Redirect URLs** : `http://localhost:3000/**` et `https://<app>.vercel.app/**`.
+  SQL via `allowed_members`. Le rôle est attribué à leur **inscription** (1ʳᵉ connexion).
 
 ## Déploiement (Vercel)
 
