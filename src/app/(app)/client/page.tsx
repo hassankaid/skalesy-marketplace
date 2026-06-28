@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import {
-  Briefcase,
   ListChecks,
   MessagesSquare,
   KeyRound,
@@ -10,25 +9,28 @@ import {
 import { PageHeader } from "@/components/app/page-header";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
-import { StatusBadge, DomainBadge } from "@/components/app/badges";
-import { ACCESS_STATUS_LABELS, ACCESS_STATUS_BADGE_CLASS } from "@/lib/constants";
-import {
-  getTasks,
-  getQuestions,
-  getAccesses,
-  getDecisions,
-} from "@/lib/queries";
+import { DomainBadge } from "@/components/app/badges";
+import { TaskStatusMenu } from "@/components/cockpit/task-status-menu";
+import { AnswerQuestionDialog } from "@/components/cockpit/answer-question-dialog";
+import { AccessStatusMenu } from "@/components/cockpit/access-status-menu";
+import { DecisionActions } from "@/components/cockpit/decision-actions";
+import { getTasks, getQuestions, getAccesses, getDecisions } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Espace client" };
 
 export default async function ClientPage() {
-  const [tasks, questions, accesses, decisions] = await Promise.all([
+  const [tasks, questions, accesses, decisions, auth] = await Promise.all([
     getTasks(),
     getQuestions(),
     getAccesses(),
     getDecisions(),
+    getAuth(),
   ]);
+
+  const role = auth?.profile?.role ?? "pending";
+  const canAct = role === "skalesy_admin" || role === "client";
 
   const actions = tasks.filter(
     (t) => t.owner_side === "client" && t.status !== "done",
@@ -89,7 +91,11 @@ export default async function ClientPage() {
                       )}
                     </div>
                     <DomainBadge domain={t.domain} />
-                    <StatusBadge status={t.status} />
+                    <TaskStatusMenu
+                      taskId={t.id}
+                      status={t.status}
+                      editable={canAct}
+                    />
                   </li>
                 ))}
               </ul>
@@ -111,8 +117,16 @@ export default async function ClientPage() {
                   {clientQuestions.map((q) => (
                     <li key={q.id} className="px-5 py-3">
                       <p className="text-sm font-medium">{q.body}</p>
-                      <div className="mt-1.5">
+                      <div className="mt-1.5 flex items-center gap-2">
                         <DomainBadge domain={q.domain} />
+                        {canAct && (
+                          <div className="ml-auto">
+                            <AnswerQuestionDialog
+                              questionId={q.id}
+                              question={q.body}
+                            />
+                          </div>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -144,11 +158,11 @@ export default async function ClientPage() {
                           </p>
                         )}
                       </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${ACCESS_STATUS_BADGE_CLASS[a.status]}`}
-                      >
-                        {ACCESS_STATUS_LABELS[a.status]}
-                      </span>
+                      <AccessStatusMenu
+                        accessId={a.id}
+                        status={a.status}
+                        editable={canAct}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -168,13 +182,19 @@ export default async function ClientPage() {
             ) : (
               <ul className="divide-y">
                 {toValidate.map((d) => (
-                  <li key={d.id} className="px-5 py-3">
-                    <p className="text-sm font-medium">{d.title}</p>
-                    {d.context && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {d.context}
-                      </p>
-                    )}
+                  <li
+                    key={d.id}
+                    className="flex items-start justify-between gap-3 px-5 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{d.title}</p>
+                      {d.context && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {d.context}
+                        </p>
+                      )}
+                    </div>
+                    {canAct && <DecisionActions decisionId={d.id} />}
                   </li>
                 ))}
               </ul>

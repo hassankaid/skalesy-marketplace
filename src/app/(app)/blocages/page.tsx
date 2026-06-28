@@ -4,13 +4,22 @@ import { PageHeader } from "@/components/app/page-header";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge, PriorityBadge } from "@/components/app/badges";
+import { BlockerActions } from "@/components/cockpit/blocker-actions";
 import { getBlockers } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
+import type { BlockerRow } from "@/lib/database.types";
 
 export const metadata: Metadata = { title: "Blocages" };
 
 export default async function BlockersPage() {
-  const blockers = await getBlockers();
+  const [blockers, auth] = await Promise.all([getBlockers(), getAuth()]);
+  const role = auth?.profile?.role ?? "pending";
+  const userDomain = auth?.profile?.provider_domain ?? null;
+  const canEdit = (b: BlockerRow) =>
+    role === "skalesy_admin" ||
+    (role === "provider" && b.domain != null && b.domain === userDomain);
+
   const open = blockers.filter((b) => b.status === "open");
   const resolved = blockers.filter((b) => b.status === "resolved");
 
@@ -54,6 +63,11 @@ export default async function BlockersPage() {
                     <span className="text-xs text-muted-foreground">
                       Signalé le {formatDate(b.created_at)}
                     </span>
+                    {canEdit(b) && (
+                      <div className="ml-auto">
+                        <BlockerActions blockerId={b.id} status="open" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </li>
@@ -79,8 +93,13 @@ export default async function BlockersPage() {
                     <span>{b.resolution}</span>
                   </p>
                 )}
-                <div className="mt-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <DomainBadge domain={b.domain} />
+                  {canEdit(b) && (
+                    <div className="ml-auto">
+                      <BlockerActions blockerId={b.id} status="resolved" />
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

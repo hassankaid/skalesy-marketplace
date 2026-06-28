@@ -4,18 +4,28 @@ import { PageHeader } from "@/components/app/page-header";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge, OwnerBadge } from "@/components/app/badges";
+import { AccessStatusMenu } from "@/components/cockpit/access-status-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ACCESS_STATUS_LABELS, ACCESS_STATUS_BADGE_CLASS } from "@/lib/constants";
 import { getAccesses, getDocuments } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
+import type { AccessRow } from "@/lib/database.types";
 
 export const metadata: Metadata = { title: "Accès & documents" };
 
 export default async function AccessPage() {
-  const [accesses, documents] = await Promise.all([
+  const [accesses, documents, auth] = await Promise.all([
     getAccesses(),
     getDocuments(),
+    getAuth(),
   ]);
+  const role = auth?.profile?.role ?? "pending";
+  const userDomain = auth?.profile?.provider_domain ?? null;
+
+  const canEditAccess = (a: AccessRow) =>
+    role === "skalesy_admin" ||
+    role === "client" ||
+    (role === "provider" && a.domain != null && a.domain === userDomain);
 
   return (
     <div className="space-y-6">
@@ -66,11 +76,11 @@ export default async function AccessPage() {
                       par
                     </span>
                     <OwnerBadge owner={a.provided_by} />
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${ACCESS_STATUS_BADGE_CLASS[a.status]}`}
-                    >
-                      {ACCESS_STATUS_LABELS[a.status]}
-                    </span>
+                    <AccessStatusMenu
+                      accessId={a.id}
+                      status={a.status}
+                      editable={canEditAccess(a)}
+                    />
                   </li>
                 ))}
               </ul>

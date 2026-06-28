@@ -4,9 +4,12 @@ import { PageHeader } from "@/components/app/page-header";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge, OwnerBadge, PriorityBadge } from "@/components/app/badges";
+import { AnswerQuestionDialog } from "@/components/cockpit/answer-question-dialog";
 import { QUESTION_STATUS_LABELS, type QuestionStatus } from "@/lib/constants";
 import { getQuestions } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
+import type { QuestionRow } from "@/lib/database.types";
 
 export const metadata: Metadata = { title: "Questions" };
 
@@ -17,7 +20,15 @@ const STATUS_CLASS: Record<QuestionStatus, string> = {
 };
 
 export default async function QuestionsPage() {
-  const questions = await getQuestions();
+  const [questions, auth] = await Promise.all([getQuestions(), getAuth()]);
+  const role = auth?.profile?.role ?? "pending";
+  const userDomain = auth?.profile?.provider_domain ?? null;
+
+  const canAnswer = (q: QuestionRow) =>
+    role === "skalesy_admin" ||
+    (role === "client" && q.directed_to === "client") ||
+    (role === "provider" && q.domain != null && q.domain === userDomain);
+
   const open = questions.filter((q) => q.status === "open");
   const resolved = questions.filter((q) => q.status !== "open");
 
@@ -53,6 +64,14 @@ export default async function QuestionsPage() {
                   <DomainBadge domain={q.domain} />
                   <span className="text-xs text-muted-foreground">Pour</span>
                   <OwnerBadge owner={q.directed_to} />
+                  {canAnswer(q) && (
+                    <div className="ml-auto">
+                      <AnswerQuestionDialog
+                        questionId={q.id}
+                        question={q.body}
+                      />
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
@@ -85,6 +104,16 @@ export default async function QuestionsPage() {
                     <span className="text-xs text-muted-foreground">
                       Répondu le {formatDate(q.answered_at)}
                     </span>
+                  )}
+                  {canAnswer(q) && (
+                    <div className="ml-auto">
+                      <AnswerQuestionDialog
+                        questionId={q.id}
+                        question={q.body}
+                        defaultAnswer={q.answer}
+                        label="Modifier"
+                      />
+                    </div>
                   )}
                 </div>
               </li>

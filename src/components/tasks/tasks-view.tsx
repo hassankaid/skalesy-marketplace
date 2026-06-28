@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LayoutGrid, Table2, CalendarClock } from "lucide-react";
 import { StatusBadge, PriorityBadge, DomainBadge, OwnerBadge } from "@/components/app/badges";
 import { EmptyState } from "@/components/app/empty-state";
+import { TaskStatusMenu } from "@/components/cockpit/task-status-menu";
 import {
   TASK_STATUS_ORDER,
   TASK_STATUS_LABELS,
@@ -13,9 +14,19 @@ import {
   PROVIDER_DOMAINS,
   type TaskStatus,
   type ProviderDomain,
+  type UserRole,
 } from "@/lib/constants";
 import { formatDate, dueState, DUE_STATE_CLASS } from "@/lib/format";
 import type { TaskRow, ProfileRow } from "@/lib/database.types";
+
+function makeCanEdit(role: UserRole, domain: ProviderDomain | null) {
+  return (t: TaskRow) => {
+    if (role === "skalesy_admin") return true;
+    if (role === "provider") return t.domain != null && t.domain === domain;
+    if (role === "client") return t.owner_side === "client";
+    return false;
+  };
+}
 
 type StatusFilter = "all" | TaskStatus;
 type DomainFilter = "all" | ProviderDomain;
@@ -23,13 +34,18 @@ type DomainFilter = "all" | ProviderDomain;
 export function TasksView({
   tasks,
   profiles,
+  role,
+  userDomain,
 }: {
   tasks: TaskRow[];
   profiles: ProfileRow[];
+  role: UserRole;
+  userDomain: ProviderDomain | null;
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [domain, setDomain] = useState<DomainFilter>("all");
   const [view, setView] = useState<"table" | "board">("table");
+  const canEdit = makeCanEdit(role, userDomain);
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -104,9 +120,9 @@ export function TasksView({
           description="Aucune tâche ne correspond à ces filtres."
         />
       ) : view === "table" ? (
-        <TaskTable tasks={filtered} nameById={nameById} />
+        <TaskTable tasks={filtered} nameById={nameById} canEdit={canEdit} />
       ) : (
-        <TaskBoard tasks={filtered} />
+        <TaskBoard tasks={filtered} canEdit={canEdit} />
       )}
     </div>
   );
@@ -171,9 +187,11 @@ function ViewButton({
 function TaskTable({
   tasks,
   nameById,
+  canEdit,
 }: {
   tasks: TaskRow[];
   nameById: Map<string, string>;
+  canEdit: (t: TaskRow) => boolean;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
@@ -231,7 +249,11 @@ function TaskTable({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={t.status} />
+                    <TaskStatusMenu
+                      taskId={t.id}
+                      status={t.status}
+                      editable={canEdit(t)}
+                    />
                   </td>
                 </tr>
               );
@@ -243,7 +265,13 @@ function TaskTable({
   );
 }
 
-function TaskBoard({ tasks }: { tasks: TaskRow[] }) {
+function TaskBoard({
+  tasks,
+  canEdit,
+}: {
+  tasks: TaskRow[];
+  canEdit: (t: TaskRow) => boolean;
+}) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {TASK_STATUS_ORDER.map((s) => {
@@ -278,6 +306,15 @@ function TaskBoard({ tasks }: { tasks: TaskRow[] }) {
                       >
                         Échéance {formatDate(t.due_date, "d MMM")}
                       </p>
+                    )}
+                    {canEdit(t) && (
+                      <div className="mt-2 border-t pt-2">
+                        <TaskStatusMenu
+                          taskId={t.id}
+                          status={t.status}
+                          editable
+                        />
+                      </div>
                     )}
                   </div>
                 );

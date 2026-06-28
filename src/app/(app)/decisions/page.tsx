@@ -4,8 +4,10 @@ import { PageHeader } from "@/components/app/page-header";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge } from "@/components/app/badges";
+import { DecisionActions } from "@/components/cockpit/decision-actions";
 import { DECISION_STATUS_LABELS, type DecisionStatus } from "@/lib/constants";
 import { getDecisions } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
 import type { DecisionRow } from "@/lib/database.types";
 import { formatDate } from "@/lib/format";
 
@@ -18,7 +20,10 @@ const STATUS_CLASS: Record<DecisionStatus, string> = {
 };
 
 export default async function DecisionsPage() {
-  const decisions = await getDecisions();
+  const [decisions, auth] = await Promise.all([getDecisions(), getAuth()]);
+  const role = auth?.profile?.role ?? "pending";
+  const canDecide = role === "skalesy_admin" || role === "client";
+
   const validated = decisions.filter((d) => d.status === "validated");
   const others = decisions.filter((d) => d.status !== "validated");
 
@@ -38,7 +43,7 @@ export default async function DecisionsPage() {
           <ul className="divide-y">
             {others.map((d) => (
               <li key={d.id} className="px-5 py-4">
-                <Decision d={d} statusClass={STATUS_CLASS[d.status]} />
+                <Decision d={d} canDecide={canDecide} />
               </li>
             ))}
           </ul>
@@ -62,7 +67,7 @@ export default async function DecisionsPage() {
           <ul className="divide-y">
             {validated.map((d) => (
               <li key={d.id} className="px-5 py-4">
-                <Decision d={d} statusClass={STATUS_CLASS[d.status]} />
+                <Decision d={d} canDecide={canDecide} />
               </li>
             ))}
           </ul>
@@ -72,13 +77,13 @@ export default async function DecisionsPage() {
   );
 }
 
-function Decision({ d, statusClass }: { d: DecisionRow; statusClass: string }) {
+function Decision({ d, canDecide }: { d: DecisionRow; canDecide: boolean }) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold">{d.title}</p>
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusClass}`}
+          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[d.status]}`}
         >
           {DECISION_STATUS_LABELS[d.status]}
         </span>
@@ -92,12 +97,17 @@ function Decision({ d, statusClass }: { d: DecisionRow; statusClass: string }) {
           <span>{d.decision}</span>
         </p>
       )}
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <DomainBadge domain={d.domain} />
         {d.decided_at && (
           <span className="text-xs text-muted-foreground">
             Validée le {formatDate(d.decided_at)}
           </span>
+        )}
+        {canDecide && d.status === "proposed" && (
+          <div className="ml-auto">
+            <DecisionActions decisionId={d.id} />
+          </div>
         )}
       </div>
     </>
