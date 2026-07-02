@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Skalesy — Cockpit Projet",
-    template: "%s · Skalesy",
+    default: "Skalesy Marketplace",
+    template: "%s · Skalesy Marketplace",
   },
   description:
     "Plateforme interne de pilotage Skalesy : centralise vision, tâches, questions, blocages, décisions, accès et roadmap d'un projet marketplace.",
