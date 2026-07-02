@@ -43,21 +43,19 @@ export function TaskStatusMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
-            disabled={pending}
-          />
-        }
-      >
-        <StatusBadge status={status} />
-        {pending ? (
-          <Loader2 className="size-3 animate-spin text-muted-foreground" />
-        ) : (
-          <ChevronDown className="size-3 text-muted-foreground" />
-        )}
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          disabled={pending}
+        >
+          <StatusBadge status={status} />
+          {pending ? (
+            <Loader2 className="size-3 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronDown className="size-3 text-muted-foreground" />
+          )}
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {TASK_STATUS_ORDER.map((s) => (

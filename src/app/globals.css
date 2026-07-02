@@ -153,6 +153,10 @@
   }
   html {
     @apply font-sans;
+    /* Reserve the scrollbar gutter so opening a popup (which locks body scroll)
+       doesn't shift layout — that shift feeds Base UI's anchor positioning into
+       an infinite loop that crashes the tab in production builds. */
+    scrollbar-gutter: stable;
   }
   /* Tighter, more editorial headings to echo the geometric wordmark */
   h1, h2, h3, h4 {

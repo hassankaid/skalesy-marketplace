@@ -61,8 +61,10 @@ export function RoadmapStatusMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<button type="button" disabled={pending} />}>
-        {badge}
+      <DropdownMenuTrigger asChild>
+        <button type="button" disabled={pending}>
+          {badge}
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {ORDER.map((s) => (
