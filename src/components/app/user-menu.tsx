@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
-import { signOut } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABELS, type UserRole } from "@/lib/constants";
 
 function initials(name: string | null, email: string | null) {
@@ -29,6 +30,15 @@ export function UserMenu({
   email: string | null;
   role: UserRole;
 }) {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 rounded-full outline-none ring-ring focus-visible:ring-2">
@@ -49,15 +59,14 @@ export function UserMenu({
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <form action={signOut}>
-          <DropdownMenuItem
-            variant="destructive"
-            render={<button type="submit" className="w-full cursor-pointer" />}
-          >
-            <LogOut className="size-4" />
-            Se déconnecter
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem
+          variant="destructive"
+          className="cursor-pointer"
+          onClick={handleSignOut}
+        >
+          <LogOut className="size-4" />
+          Se déconnecter
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
