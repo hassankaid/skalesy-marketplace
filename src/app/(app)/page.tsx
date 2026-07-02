@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/app/stat-card";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
+import { WelcomeBanner } from "@/components/app/welcome-banner";
 import { StatusBadge, DomainBadge } from "@/components/app/badges";
 import { PROVIDER_DOMAINS, type ProviderDomain } from "@/lib/constants";
 import { formatDate, dueState, DUE_STATE_CLASS } from "@/lib/format";
@@ -64,6 +65,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <WelcomeBanner />
+
       {/* Project header */}
       <section className="rounded-xl border bg-card p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
