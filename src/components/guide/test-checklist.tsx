@@ -9,76 +9,183 @@ import {
   Check,
   ArrowRight,
   RotateCcw,
-  Compass,
-  ListChecks,
-  Briefcase,
-  OctagonAlert,
-  Settings,
+  CircleCheckBig,
   PartyPopper,
+  Building2,
+  Code2,
+  UserSquare,
+  Eye,
   type LucideIcon,
 } from "lucide-react";
 
-type Audience = "all" | "skalesy" | "client" | "provider";
-type Step = { id: string; label: string; audience: Audience; href?: string };
-type Group = { title: string; icon: LucideIcon; steps: Step[] };
+type Role = "skalesy" | "provider" | "client" | "all";
+type Step = { id: string; label: string; expected?: string; href?: string };
+type Group = {
+  role: Role;
+  who: string;
+  account?: string;
+  icon: LucideIcon;
+  steps: Step[];
+};
+
+const ROLE_STYLE: Record<Role, string> = {
+  skalesy: "bg-violet-100 text-violet-700",
+  provider: "bg-slate-100 text-slate-600",
+  client: "bg-sky-100 text-sky-700",
+  all: "bg-muted text-muted-foreground",
+};
+const ROLE_LABEL: Record<Role, string> = {
+  skalesy: "Skalesy",
+  provider: "Prestataire",
+  client: "Client",
+  all: "Tous",
+};
 
 const GROUPS: Group[] = [
   {
-    title: "1 · Découvrir",
-    icon: Compass,
+    role: "skalesy",
+    who: "Admin Skalesy",
+    account: "contact@hassankaid.com",
+    icon: Building2,
     steps: [
-      { id: "d1", audience: "all", href: "/", label: "Ouvrir le Dashboard et repérer l'avancement global et les indicateurs (en cours, blocages, actions client…)." },
-      { id: "d2", audience: "all", label: "Parcourir le menu de gauche pour voir les différentes sections du projet." },
-      { id: "d3", audience: "all", href: "/prestataires", label: "Ouvrir un espace prestataire (ex. Développement) et lire sa vision, ses besoins et ses tâches." },
+      {
+        id: "a1",
+        href: "/",
+        label:
+          "Sur le Dashboard, clique « Configurer le projet » : saisis le nom, la vision, quelques objectifs, les dates et l'avancement, puis Enregistre.",
+        expected:
+          "Le Dashboard affiche ta vision, tes objectifs et la barre d'avancement.",
+      },
+      {
+        id: "a2",
+        href: "/prestataires",
+        label:
+          "Dans Prestataires, ouvre « Développement » puis « Modifier l'espace » et renseigne vision, besoins et recommandations.",
+        expected: "Les textes apparaissent dans l'espace du prestataire.",
+      },
+      {
+        id: "a3",
+        href: "/taches",
+        label:
+          "Dans Tâches, clique « Nouvelle tâche » : titre, domaine « Développement », responsable « Prestataire », puis Créer.",
+        expected: "La tâche apparaît et le compteur « À traiter » augmente.",
+      },
+      {
+        id: "a4",
+        href: "/questions",
+        label:
+          "Dans Questions, clique « Nouvelle question » adressée au « Client », puis Créer.",
+        expected: "La question apparaît dans « En attente de réponse ».",
+      },
+      {
+        id: "a5",
+        href: "/decisions",
+        label:
+          "Ajoute une décision (Décisions), un accès à fournir (Accès) et une étape (Roadmap).",
+        expected: "Chaque élément apparaît dans sa section.",
+      },
+      {
+        id: "a6",
+        href: "/admin",
+        label:
+          "Ouvre Administration : ajoute (ou retire) un membre autorisé par email.",
+        expected: "La liste des membres se met à jour.",
+      },
     ],
   },
   {
-    title: "2 · Faire avancer une tâche",
-    icon: ListChecks,
+    role: "provider",
+    who: "Prestataire — Développement",
+    account: "nadir@neteo.digital",
+    icon: Code2,
     steps: [
-      { id: "t1", audience: "provider", href: "/taches", label: "Aller dans Tâches et filtrer par statut ou par domaine." },
-      { id: "t2", audience: "provider", label: "Changer le statut d'une tâche (ex. « En cours » → « Validé ») et voir les compteurs se mettre à jour." },
-      { id: "t3", audience: "all", label: "Basculer entre la vue Tableau et la vue Kanban." },
-      { id: "t4", audience: "skalesy", label: "Créer une tâche avec le bouton « Nouvelle tâche »." },
+      {
+        id: "b1",
+        href: "/taches",
+        label:
+          "Ouvre Tâches : tu vois la tâche créée par l'admin. Change son statut en « En cours ».",
+        expected:
+          "Le statut est mis à jour pour tout le monde et les compteurs bougent.",
+      },
+      {
+        id: "b2",
+        href: "/prestataires/dev",
+        label:
+          "Dans ton espace « Développement », clique « Modifier l'espace » et mets à jour tes besoins.",
+        expected:
+          "Seul ton domaine est modifiable — les autres espaces sont en lecture seule.",
+      },
+      {
+        id: "b3",
+        href: "/blocages",
+        label: "Dans Blocages, clique « Signaler un blocage ».",
+        expected: "Le blocage apparaît dans « Blocages ouverts ».",
+      },
+      {
+        id: "b4",
+        label: "Regarde le menu de gauche.",
+        expected: "« Administration » n'apparaît pas (réservé à Skalesy).",
+      },
     ],
   },
   {
-    title: "3 · Les actions du client",
-    icon: Briefcase,
+    role: "client",
+    who: "Client",
+    account: "compte à créer (ou prévisualisable en admin)",
+    icon: UserSquare,
     steps: [
-      { id: "c1", audience: "client", href: "/client", label: "Ouvrir l'Espace client : tout ce qui est attendu du client est regroupé ici." },
-      { id: "c2", audience: "client", href: "/questions", label: "Répondre à une question adressée au client." },
-      { id: "c3", audience: "client", href: "/decisions", label: "Valider (ou écarter) une décision proposée." },
-      { id: "c4", audience: "client", href: "/acces", label: "Faire passer un accès de « Nécessaire » à « Fourni » puis « Confirmé »." },
+      {
+        id: "c1",
+        href: "/client",
+        label: "Ouvre l'Espace client : tout ce qui t'est demandé est regroupé ici.",
+        expected:
+          "Tu vois tes actions, les questions, les accès et les décisions te concernant.",
+      },
+      {
+        id: "c2",
+        href: "/questions",
+        label: "Réponds à la question posée par l'admin.",
+        expected: "La question passe en « Répondue ».",
+      },
+      {
+        id: "c3",
+        href: "/decisions",
+        label: "Valide une décision proposée.",
+        expected: "La décision passe en « Validée ».",
+      },
+      {
+        id: "c4",
+        href: "/acces",
+        label: "Fais passer un accès de « Nécessaire » à « Fourni ».",
+        expected: "Le statut de l'accès change immédiatement.",
+      },
     ],
   },
   {
-    title: "4 · Suivre & débloquer",
-    icon: OctagonAlert,
+    role: "all",
+    who: "Vérifications transverses",
+    icon: Eye,
     steps: [
-      { id: "s1", audience: "provider", href: "/blocages", label: "Consulter les blocages et en marquer un comme « Résolu »." },
-      { id: "s2", audience: "all", href: "/roadmap", label: "Suivre la roadmap du projet, étape par étape et par phase." },
-    ],
-  },
-  {
-    title: "5 · Piloter (Skalesy)",
-    icon: Settings,
-    steps: [
-      { id: "a1", audience: "skalesy", href: "/admin", label: "Ouvrir Administration et ajouter ou retirer un membre autorisé." },
-      { id: "a2", audience: "skalesy", href: "/equipe", label: "Consulter l'équipe et les rôles de chacun." },
+      {
+        id: "d1",
+        href: "/",
+        label: "Reviens au Dashboard après quelques actions.",
+        expected:
+          "L'« Activité récente » et les indicateurs reflètent ce qui vient d'être fait.",
+      },
+      {
+        id: "d2",
+        label: "Constate le périmètre de chacun.",
+        expected:
+          "Client = ses actions · Prestataire = son domaine · Skalesy = tout.",
+      },
     ],
   },
 ];
 
 const ALL_IDS = GROUPS.flatMap((g) => g.steps.map((s) => s.id));
 const TOTAL = ALL_IDS.length;
-const STORAGE_KEY = "skalesy-guide-progress-v1";
-
-const AUDIENCE: Record<Exclude<Audience, "all">, { label: string; className: string }> = {
-  skalesy: { label: "Skalesy", className: "bg-violet-100 text-violet-700" },
-  client: { label: "Client", className: "bg-sky-100 text-sky-700" },
-  provider: { label: "Prestataire", className: "bg-slate-100 text-slate-600" },
-};
+const STORAGE_KEY = "skalesy-guide-progress-v2";
 
 export function TestChecklist() {
   const [done, setDone] = useState<Set<string>>(new Set());
@@ -87,7 +194,10 @@ export function TestChecklist() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setDone(new Set((JSON.parse(raw) as string[]).filter((id) => ALL_IDS.includes(id))));
+      if (raw)
+        setDone(
+          new Set((JSON.parse(raw) as string[]).filter((id) => ALL_IDS.includes(id))),
+        );
     } catch {}
     setLoaded(true);
   }, []);
@@ -113,7 +223,6 @@ export function TestChecklist() {
 
   return (
     <div className="space-y-5">
-      {/* Progress */}
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -138,21 +247,33 @@ export function TestChecklist() {
         {count === TOTAL && (
           <p className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
             <PartyPopper className="size-4" />
-            Bravo, vous avez fait le tour de la plateforme !
+            Parcours de test terminé — la plateforme est prise en main !
           </p>
         )}
       </div>
 
-      {/* Groups */}
       {GROUPS.map((group) => {
         const Icon = group.icon;
         return (
-          <div key={group.title} className="overflow-hidden rounded-xl border bg-card">
-            <div className="flex items-center gap-2 border-b px-4 py-3">
+          <div key={group.who} className="overflow-hidden rounded-xl border bg-card">
+            <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
               <div className="flex size-7 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                 <Icon className="size-4" />
               </div>
-              <h3 className="text-sm font-semibold">{group.title}</h3>
+              <h3 className="text-sm font-semibold">{group.who}</h3>
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[0.7rem] font-medium",
+                  ROLE_STYLE[group.role],
+                )}
+              >
+                {ROLE_LABEL[group.role]}
+              </span>
+              {group.account && (
+                <span className="ml-auto rounded-md bg-muted px-2 py-0.5 font-mono text-[0.7rem] text-muted-foreground">
+                  {group.account}
+                </span>
+              )}
             </div>
             <ul className="divide-y">
               {group.steps.map((step) => {
@@ -174,35 +295,27 @@ export function TestChecklist() {
                       <span className="sr-only">Marquer comme fait</span>
                     </button>
                     <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-sm",
-                          checked && "text-muted-foreground line-through",
-                        )}
-                      >
+                      <p className={cn("text-sm", checked && "text-muted-foreground line-through")}>
                         {step.label}
                       </p>
-                      <div className="mt-1 flex items-center gap-2">
-                        {step.audience !== "all" && (
-                          <span
-                            className={cn(
-                              "rounded-full px-1.5 py-0.5 text-[0.7rem] font-medium",
-                              AUDIENCE[step.audience].className,
-                            )}
-                          >
-                            {AUDIENCE[step.audience].label}
+                      {step.expected && (
+                        <p className="mt-1 flex items-start gap-1.5 text-xs text-emerald-700">
+                          <CircleCheckBig className="mt-0.5 size-3.5 shrink-0" />
+                          <span>
+                            <span className="font-medium">Résultat attendu :</span>{" "}
+                            {step.expected}
                           </span>
-                        )}
-                        {step.href && (
-                          <Link
-                            href={step.href}
-                            className="inline-flex items-center gap-0.5 text-xs font-medium text-brand hover:underline"
-                          >
-                            Ouvrir la page
-                            <ArrowRight className="size-3" />
-                          </Link>
-                        )}
-                      </div>
+                        </p>
+                      )}
+                      {step.href && (
+                        <Link
+                          href={step.href}
+                          className="mt-1 inline-flex items-center gap-0.5 text-xs font-medium text-brand hover:underline"
+                        >
+                          Ouvrir la page
+                          <ArrowRight className="size-3" />
+                        </Link>
+                      )}
                     </div>
                   </li>
                 );

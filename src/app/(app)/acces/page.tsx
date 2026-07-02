@@ -5,6 +5,8 @@ import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge, OwnerBadge } from "@/components/app/badges";
 import { AccessStatusMenu } from "@/components/cockpit/access-status-menu";
+import { NewAccessDialog, NewDocumentDialog } from "@/components/cockpit/create-dialogs";
+import { DeleteButton } from "@/components/cockpit/delete-button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getAccesses, getDocuments } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
@@ -20,12 +22,16 @@ export default async function AccessPage() {
     getAuth(),
   ]);
   const role = auth?.profile?.role ?? "pending";
+  const userId = auth?.user.id ?? null;
   const userDomain = auth?.profile?.provider_domain ?? null;
 
   const canEditAccess = (a: AccessRow) =>
     role === "skalesy_admin" ||
     role === "client" ||
     (role === "provider" && a.domain != null && a.domain === userDomain);
+  const canCreateAccess = role === "skalesy_admin" || role === "provider";
+  const isAdmin = role === "skalesy_admin";
+  const isMember = role !== "pending";
 
   return (
     <div className="space-y-6">
@@ -49,6 +55,13 @@ export default async function AccessPage() {
             title="Accès nécessaires"
             description={`${accesses.length} accès`}
             noPadding
+            action={
+              canCreateAccess ? (
+                <NewAccessDialog
+                  defaultDomain={role === "provider" ? userDomain ?? undefined : undefined}
+                />
+              ) : undefined
+            }
           >
             {accesses.length === 0 ? (
               <div className="p-5">
@@ -72,15 +85,13 @@ export default async function AccessPage() {
                       )}
                     </div>
                     <DomainBadge domain={a.domain} />
-                    <span className="hidden text-xs text-muted-foreground sm:inline">
-                      par
-                    </span>
                     <OwnerBadge owner={a.provided_by} />
                     <AccessStatusMenu
                       accessId={a.id}
                       status={a.status}
                       editable={canEditAccess(a)}
                     />
+                    {isAdmin && <DeleteButton kind="access" id={a.id} name={a.name} />}
                   </li>
                 ))}
               </ul>
@@ -93,6 +104,7 @@ export default async function AccessPage() {
             title="Documents partagés"
             description={`${documents.length} document(s)`}
             noPadding
+            action={isMember ? <NewDocumentDialog /> : undefined}
           >
             {documents.length === 0 ? (
               <div className="p-5">
@@ -102,11 +114,9 @@ export default async function AccessPage() {
               <ul className="divide-y">
                 {documents.map((d) => {
                   const hasLink = d.url && d.url !== "#";
+                  const canDelete = isAdmin || d.uploaded_by === userId;
                   return (
-                    <li
-                      key={d.id}
-                      className="flex items-center gap-3 px-5 py-3"
-                    >
+                    <li key={d.id} className="flex items-center gap-3 px-5 py-3">
                       <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
                         <FileText className="size-4 text-muted-foreground" />
                       </div>
@@ -127,6 +137,9 @@ export default async function AccessPage() {
                         >
                           Ouvrir <ExternalLink className="size-3.5" />
                         </a>
+                      )}
+                      {canDelete && (
+                        <DeleteButton kind="document" id={d.id} name={d.name} />
                       )}
                     </li>
                   );

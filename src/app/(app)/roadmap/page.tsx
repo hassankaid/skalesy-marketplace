@@ -4,8 +4,12 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge } from "@/components/app/badges";
-import { ROADMAP_STATUS_LABELS, type RoadmapStatus } from "@/lib/constants";
+import { RoadmapStatusMenu } from "@/components/cockpit/roadmap-status-menu";
+import { NewRoadmapDialog } from "@/components/cockpit/create-dialogs";
+import { DeleteButton } from "@/components/cockpit/delete-button";
+import { type RoadmapStatus } from "@/lib/constants";
 import { getRoadmap } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import type { RoadmapRow } from "@/lib/database.types";
 
@@ -16,14 +20,10 @@ const DOT: Record<RoadmapStatus, string> = {
   in_progress: "bg-blue-500",
   done: "bg-emerald-500",
 };
-const STATUS_CLASS: Record<RoadmapStatus, string> = {
-  planned: "bg-slate-100 text-slate-600",
-  in_progress: "bg-blue-100 text-blue-700",
-  done: "bg-emerald-100 text-emerald-700",
-};
 
 export default async function RoadmapPage() {
-  const items = await getRoadmap();
+  const [items, auth] = await Promise.all([getRoadmap(), getAuth()]);
+  const isAdmin = auth?.profile?.role === "skalesy_admin";
 
   const groups: { phase: string; items: RoadmapRow[] }[] = [];
   for (const it of items) {
@@ -41,10 +41,16 @@ export default async function RoadmapPage() {
       <PageHeader
         title="Roadmap"
         description="Les grandes étapes du projet, par phase, du cadrage au lancement."
-      />
+      >
+        {isAdmin && <NewRoadmapDialog />}
+      </PageHeader>
 
       {groups.length === 0 ? (
-        <EmptyState icon={MapIcon} title="Roadmap vide" />
+        <EmptyState
+          icon={MapIcon}
+          title="Roadmap vide"
+          description="Ajoutez les grandes étapes du projet."
+        />
       ) : (
         <div className="space-y-8">
           {groups.map((g) => (
@@ -66,14 +72,16 @@ export default async function RoadmapPage() {
                       <div className="rounded-xl border bg-card p-4">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold">{it.title}</p>
-                          <span
-                            className={cn(
-                              "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-                              STATUS_CLASS[status],
+                          <div className="flex shrink-0 items-center gap-1">
+                            <RoadmapStatusMenu
+                              id={it.id}
+                              status={status}
+                              editable={isAdmin}
+                            />
+                            {isAdmin && (
+                              <DeleteButton kind="roadmap" id={it.id} name={it.title} />
                             )}
-                          >
-                            {ROADMAP_STATUS_LABELS[status]}
-                          </span>
+                          </div>
                         </div>
                         {it.description && (
                           <p className="mt-1 text-sm text-muted-foreground">

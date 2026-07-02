@@ -69,9 +69,11 @@ export default function GuidePage() {
           </h2>
         </div>
         <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
-          Suivez ces étapes dans l&apos;ordre pour prendre la plateforme en main. Cochez
-          au fur et à mesure — votre progression est conservée sur cet appareil. Chaque
-          badge indique le profil concerné (en tant qu&apos;admin, vous pouvez tout tester).
+          Un scénario complet, dans l&apos;ordre : l&apos;admin configure le projet, puis
+          chaque rôle agit avec son propre compte. Chaque étape indique le{" "}
+          <strong className="text-foreground">compte à utiliser</strong> et le{" "}
+          <strong className="text-foreground">résultat attendu</strong>. Cochez au fur et
+          à mesure — votre progression est conservée sur cet appareil.
         </p>
         <TestChecklist />
       </section>

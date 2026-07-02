@@ -24,11 +24,13 @@ import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { WelcomeBanner } from "@/components/app/welcome-banner";
 import { StatusBadge, DomainBadge } from "@/components/app/badges";
+import { ProjectSettingsDialog } from "@/components/cockpit/project-settings-dialog";
+import { getAuth } from "@/lib/auth";
 import { PROVIDER_DOMAINS, type ProviderDomain } from "@/lib/constants";
 import { formatDate, dueState, DUE_STATE_CLASS } from "@/lib/format";
 
 export default async function DashboardPage() {
-  const [project, tasks, questions, blockers, accesses, workspaces, activity] =
+  const [project, tasks, questions, blockers, accesses, workspaces, activity, auth] =
     await Promise.all([
       getProject(),
       getTasks(),
@@ -37,7 +39,9 @@ export default async function DashboardPage() {
       getAccesses(),
       getWorkspaces(),
       getActivity(8),
+      getAuth(),
     ]);
+  const isAdmin = auth?.profile?.role === "skalesy_admin";
 
   if (!project) {
     return (
@@ -120,6 +124,21 @@ export default async function DashboardPage() {
                 </div>
               )}
             </dl>
+            {isAdmin && (
+              <div className="mt-4">
+                <ProjectSettingsDialog
+                  project={{
+                    name: project.name,
+                    client_name: project.client_name,
+                    description: project.description,
+                    objectives,
+                    start_date: project.start_date,
+                    target_date: project.target_date,
+                    progress: project.progress,
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>

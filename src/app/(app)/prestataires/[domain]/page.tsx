@@ -26,6 +26,8 @@ import {
   type ProviderDomain,
 } from "@/lib/constants";
 import { getWorkspace, getTasks, getQuestions, getBlockers } from "@/lib/queries";
+import { getAuth } from "@/lib/auth";
+import { WorkspaceEditDialog } from "@/components/cockpit/workspace-edit-dialog";
 import { formatDate } from "@/lib/format";
 
 export async function generateMetadata({
@@ -49,12 +51,17 @@ export default async function ProviderDetailPage({
   const meta = PROVIDER_DOMAINS[domain];
   const Icon = meta.icon;
 
-  const [workspace, allTasks, allQuestions, allBlockers] = await Promise.all([
+  const [workspace, allTasks, allQuestions, allBlockers, auth] = await Promise.all([
     getWorkspace(domain),
     getTasks(),
     getQuestions(),
     getBlockers(),
+    getAuth(),
   ]);
+  const role = auth?.profile?.role ?? "pending";
+  const canEdit =
+    role === "skalesy_admin" ||
+    (role === "provider" && auth?.profile?.provider_domain === domain);
 
   const tasks = allTasks.filter((t) => t.domain === domain);
   const questions = allQuestions.filter((q) => q.domain === domain);
@@ -84,14 +91,25 @@ export default async function ProviderDetailPage({
               <p className="text-sm text-muted-foreground">{meta.description}</p>
             </div>
           </div>
-          <div className="w-full sm:w-52">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Avancement</span>
-              <span className="font-medium tabular-nums">
-                {workspace?.progress ?? 0}%
-              </span>
+          <div className="flex w-full flex-col gap-3 sm:w-52">
+            <div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Avancement</span>
+                <span className="font-medium tabular-nums">
+                  {workspace?.progress ?? 0}%
+                </span>
+              </div>
+              <Progress value={workspace?.progress ?? 0} className="mt-1.5 h-2" />
             </div>
-            <Progress value={workspace?.progress ?? 0} className="mt-1.5 h-2" />
+            {canEdit && workspace && (
+              <WorkspaceEditDialog
+                workspaceId={workspace.id}
+                summary={workspace.summary}
+                needs={workspace.needs}
+                recommendations={workspace.recommendations}
+                progress={workspace.progress}
+              />
+            )}
           </div>
         </div>
       </section>

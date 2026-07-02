@@ -5,6 +5,8 @@ import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge, OwnerBadge, PriorityBadge } from "@/components/app/badges";
 import { AnswerQuestionDialog } from "@/components/cockpit/answer-question-dialog";
+import { NewQuestionDialog } from "@/components/cockpit/create-dialogs";
+import { DeleteButton } from "@/components/cockpit/delete-button";
 import { QUESTION_STATUS_LABELS, type QuestionStatus } from "@/lib/constants";
 import { getQuestions } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
@@ -28,16 +30,40 @@ export default async function QuestionsPage() {
     role === "skalesy_admin" ||
     (role === "client" && q.directed_to === "client") ||
     (role === "provider" && q.domain != null && q.domain === userDomain);
+  const canDelete = (q: QuestionRow) =>
+    role === "skalesy_admin" ||
+    (role === "provider" && q.domain != null && q.domain === userDomain);
+  const canCreate = role === "skalesy_admin" || role === "provider";
 
   const open = questions.filter((q) => q.status === "open");
   const resolved = questions.filter((q) => q.status !== "open");
+
+  const rowActions = (q: QuestionRow) => (
+    <div className="ml-auto flex items-center gap-1">
+      {canAnswer(q) && (
+        <AnswerQuestionDialog
+          questionId={q.id}
+          question={q.body}
+          defaultAnswer={q.answer}
+          label={q.answer ? "Modifier" : "Répondre"}
+        />
+      )}
+      {canDelete(q) && <DeleteButton kind="question" id={q.id} name={q.body} />}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Questions ouvertes"
         description="Les questions en attente de réponse pour débloquer les décisions et l'avancement."
-      />
+      >
+        {canCreate && (
+          <NewQuestionDialog
+            defaultDomain={role === "provider" ? userDomain ?? undefined : undefined}
+          />
+        )}
+      </PageHeader>
 
       <SectionCard
         title="En attente de réponse"
@@ -49,7 +75,7 @@ export default async function QuestionsPage() {
             <EmptyState
               icon={MessagesSquare}
               title="Aucune question ouverte"
-              description="Toutes les questions ont reçu une réponse."
+              description="Ajoutez une question ou attendez les réponses."
             />
           </div>
         ) : (
@@ -64,14 +90,7 @@ export default async function QuestionsPage() {
                   <DomainBadge domain={q.domain} />
                   <span className="text-xs text-muted-foreground">Pour</span>
                   <OwnerBadge owner={q.directed_to} />
-                  {canAnswer(q) && (
-                    <div className="ml-auto">
-                      <AnswerQuestionDialog
-                        questionId={q.id}
-                        question={q.body}
-                      />
-                    </div>
-                  )}
+                  {rowActions(q)}
                 </div>
               </li>
             ))}
@@ -105,16 +124,7 @@ export default async function QuestionsPage() {
                       Répondu le {formatDate(q.answered_at)}
                     </span>
                   )}
-                  {canAnswer(q) && (
-                    <div className="ml-auto">
-                      <AnswerQuestionDialog
-                        questionId={q.id}
-                        question={q.body}
-                        defaultAnswer={q.answer}
-                        label="Modifier"
-                      />
-                    </div>
-                  )}
+                  {rowActions(q)}
                 </div>
               </li>
             ))}

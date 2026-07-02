@@ -7,6 +7,7 @@ import { LayoutGrid, Table2, CalendarClock } from "lucide-react";
 import { StatusBadge, PriorityBadge, DomainBadge, OwnerBadge } from "@/components/app/badges";
 import { EmptyState } from "@/components/app/empty-state";
 import { TaskStatusMenu } from "@/components/cockpit/task-status-menu";
+import { DeleteButton } from "@/components/cockpit/delete-button";
 import {
   TASK_STATUS_ORDER,
   TASK_STATUS_LABELS,
@@ -249,11 +250,16 @@ function TaskTable({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <TaskStatusMenu
-                      taskId={t.id}
-                      status={t.status}
-                      editable={canEdit(t)}
-                    />
+                    <div className="flex items-center gap-1">
+                      <TaskStatusMenu
+                        taskId={t.id}
+                        status={t.status}
+                        editable={canEdit(t)}
+                      />
+                      {canEdit(t) && (
+                        <DeleteButton kind="task" id={t.id} name={t.title} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -308,12 +314,13 @@ function TaskBoard({
                       </p>
                     )}
                     {canEdit(t) && (
-                      <div className="mt-2 border-t pt-2">
+                      <div className="mt-2 flex items-center justify-between border-t pt-2">
                         <TaskStatusMenu
                           taskId={t.id}
                           status={t.status}
                           editable
                         />
+                        <DeleteButton kind="task" id={t.id} name={t.title} />
                       </div>
                     )}
                   </div>

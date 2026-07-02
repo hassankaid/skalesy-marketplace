@@ -5,6 +5,8 @@ import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge, PriorityBadge } from "@/components/app/badges";
 import { BlockerActions } from "@/components/cockpit/blocker-actions";
+import { NewBlockerDialog } from "@/components/cockpit/create-dialogs";
+import { DeleteButton } from "@/components/cockpit/delete-button";
 import { getBlockers } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
@@ -19,6 +21,7 @@ export default async function BlockersPage() {
   const canEdit = (b: BlockerRow) =>
     role === "skalesy_admin" ||
     (role === "provider" && b.domain != null && b.domain === userDomain);
+  const canCreate = role === "skalesy_admin" || role === "provider";
 
   const open = blockers.filter((b) => b.status === "open");
   const resolved = blockers.filter((b) => b.status === "resolved");
@@ -28,7 +31,13 @@ export default async function BlockersPage() {
       <PageHeader
         title="Blocages"
         description="Les points bloquants qui empêchent l'avancement, et leur résolution."
-      />
+      >
+        {canCreate && (
+          <NewBlockerDialog
+            defaultDomain={role === "provider" ? userDomain ?? undefined : undefined}
+          />
+        )}
+      </PageHeader>
 
       <SectionCard
         title="Blocages ouverts"
@@ -64,8 +73,9 @@ export default async function BlockersPage() {
                       Signalé le {formatDate(b.created_at)}
                     </span>
                     {canEdit(b) && (
-                      <div className="ml-auto">
+                      <div className="ml-auto flex items-center gap-1">
                         <BlockerActions blockerId={b.id} status="open" />
+                        <DeleteButton kind="blocker" id={b.id} name={b.title} />
                       </div>
                     )}
                   </div>
@@ -96,8 +106,9 @@ export default async function BlockersPage() {
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <DomainBadge domain={b.domain} />
                   {canEdit(b) && (
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-1">
                       <BlockerActions blockerId={b.id} status="resolved" />
+                      <DeleteButton kind="blocker" id={b.id} name={b.title} />
                     </div>
                   )}
                 </div>

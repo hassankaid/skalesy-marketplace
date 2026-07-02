@@ -5,6 +5,8 @@ import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { DomainBadge } from "@/components/app/badges";
 import { DecisionActions } from "@/components/cockpit/decision-actions";
+import { NewDecisionDialog } from "@/components/cockpit/create-dialogs";
+import { DeleteButton } from "@/components/cockpit/delete-button";
 import { DECISION_STATUS_LABELS, type DecisionStatus } from "@/lib/constants";
 import { getDecisions } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
@@ -23,6 +25,7 @@ export default async function DecisionsPage() {
   const [decisions, auth] = await Promise.all([getDecisions(), getAuth()]);
   const role = auth?.profile?.role ?? "pending";
   const canDecide = role === "skalesy_admin" || role === "client";
+  const canManage = role === "skalesy_admin";
 
   const validated = decisions.filter((d) => d.status === "validated");
   const others = decisions.filter((d) => d.status !== "validated");
@@ -32,7 +35,9 @@ export default async function DecisionsPage() {
       <PageHeader
         title="Décisions"
         description="L'historique des décisions structurantes : ce qui est validé, proposé ou écarté."
-      />
+      >
+        {canManage && <NewDecisionDialog />}
+      </PageHeader>
 
       {others.length > 0 && (
         <SectionCard
@@ -43,7 +48,7 @@ export default async function DecisionsPage() {
           <ul className="divide-y">
             {others.map((d) => (
               <li key={d.id} className="px-5 py-4">
-                <Decision d={d} canDecide={canDecide} />
+                <Decision d={d} canDecide={canDecide} canManage={canManage} />
               </li>
             ))}
           </ul>
@@ -60,14 +65,14 @@ export default async function DecisionsPage() {
             <EmptyState
               icon={Gavel}
               title="Aucune décision validée"
-              description="Les décisions validées apparaîtront ici."
+              description="Ajoutez une décision et validez-la."
             />
           </div>
         ) : (
           <ul className="divide-y">
             {validated.map((d) => (
               <li key={d.id} className="px-5 py-4">
-                <Decision d={d} canDecide={canDecide} />
+                <Decision d={d} canDecide={canDecide} canManage={canManage} />
               </li>
             ))}
           </ul>
@@ -77,7 +82,15 @@ export default async function DecisionsPage() {
   );
 }
 
-function Decision({ d, canDecide }: { d: DecisionRow; canDecide: boolean }) {
+function Decision({
+  d,
+  canDecide,
+  canManage,
+}: {
+  d: DecisionRow;
+  canDecide: boolean;
+  canManage: boolean;
+}) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -104,11 +117,12 @@ function Decision({ d, canDecide }: { d: DecisionRow; canDecide: boolean }) {
             Validée le {formatDate(d.decided_at)}
           </span>
         )}
-        {canDecide && d.status === "proposed" && (
-          <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          {canDecide && d.status === "proposed" && (
             <DecisionActions decisionId={d.id} />
-          </div>
-        )}
+          )}
+          {canManage && <DeleteButton kind="decision" id={d.id} name={d.title} />}
+        </div>
       </div>
     </>
   );

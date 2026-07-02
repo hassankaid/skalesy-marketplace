@@ -7,9 +7,11 @@ import { getProject } from "@/lib/queries";
 import {
   TASK_STATUS_LABELS,
   ACCESS_STATUS_LABELS,
+  ROADMAP_STATUS_LABELS,
   type TaskStatus,
   type AccessStatus,
   type DecisionStatus,
+  type RoadmapStatus,
   type OwnerSide,
   type Priority,
   type ProviderDomain,
@@ -264,6 +266,366 @@ export async function removeAllowedMember(email: string): Promise<ActionResult> 
     .eq("email", email);
   if (error) return { ok: false, error: error.message };
   await logActivity("member", null, "removed", `Accès retiré : ${email}`);
+  revalidate();
+  return { ok: true };
+}
+
+/* ---------------- Project & workspaces (configuration) ---------------- */
+
+function clampProgress(n: number | undefined): number {
+  const v = Math.round(Number(n));
+  if (Number.isNaN(v)) return 0;
+  return Math.min(100, Math.max(0, v));
+}
+
+async function projectId(): Promise<string | null> {
+  const p = await getProject();
+  return p?.id ?? null;
+}
+
+export async function updateProject(input: {
+  name: string;
+  client_name?: string;
+  description?: string;
+  objectives?: string[];
+  start_date?: string;
+  target_date?: string;
+  progress?: number;
+}): Promise<ActionResult> {
+  const name = input.name?.trim();
+  if (!name) return { ok: false, error: "Le nom du projet est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .update({
+      name,
+      client_name: input.client_name?.trim() || null,
+      description: input.description?.trim() || null,
+      objectives: (input.objectives ?? []).map((o) => o.trim()).filter(Boolean),
+      start_date: input.start_date || null,
+      target_date: input.target_date || null,
+      progress: clampProgress(input.progress),
+    })
+    .eq("id", pid)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("project", pid, "updated", "Projet mis à jour");
+  revalidate();
+  return { ok: true };
+}
+
+export async function updateWorkspace(
+  id: string,
+  input: {
+    summary?: string;
+    needs?: string;
+    recommendations?: string;
+    progress?: number;
+  },
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("provider_workspaces")
+    .update({
+      summary: input.summary?.trim() || null,
+      needs: input.needs?.trim() || null,
+      recommendations: input.recommendations?.trim() || null,
+      progress: clampProgress(input.progress),
+    })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("workspace", id, "updated", "Espace prestataire mis à jour");
+  revalidate();
+  return { ok: true };
+}
+
+/* ---------------- Create ---------------- */
+
+export async function createQuestion(input: {
+  body: string;
+  domain?: ProviderDomain | "";
+  directed_to: OwnerSide;
+  priority: Priority;
+}): Promise<ActionResult> {
+  const body = input.body?.trim();
+  if (!body) return { ok: false, error: "La question est requise." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const auth = await getAuth();
+  const { data, error } = await supabase
+    .from("questions")
+    .insert({
+      project_id: pid,
+      body,
+      domain: input.domain ? (input.domain as ProviderDomain) : null,
+      directed_to: input.directed_to,
+      priority: input.priority,
+      asked_by: auth?.user.id ?? null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("question", data.id, "created", `Question ajoutée : « ${body} »`);
+  revalidate();
+  return { ok: true };
+}
+
+export async function createBlocker(input: {
+  title: string;
+  description?: string;
+  domain?: ProviderDomain | "";
+  severity: Priority;
+}): Promise<ActionResult> {
+  const title = input.title?.trim();
+  if (!title) return { ok: false, error: "Le titre est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const auth = await getAuth();
+  const { data, error } = await supabase
+    .from("blockers")
+    .insert({
+      project_id: pid,
+      title,
+      description: input.description?.trim() || null,
+      domain: input.domain ? (input.domain as ProviderDomain) : null,
+      severity: input.severity,
+      raised_by: auth?.user.id ?? null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("blocker", data.id, "created", `Blocage signalé : « ${title} »`);
+  revalidate();
+  return { ok: true };
+}
+
+export async function createDecision(input: {
+  title: string;
+  context?: string;
+  decision?: string;
+  domain?: ProviderDomain | "";
+}): Promise<ActionResult> {
+  const title = input.title?.trim();
+  if (!title) return { ok: false, error: "Le titre est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("decisions")
+    .insert({
+      project_id: pid,
+      title,
+      context: input.context?.trim() || null,
+      decision: input.decision?.trim() || null,
+      domain: input.domain ? (input.domain as ProviderDomain) : null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("decision", data.id, "created", `Décision ajoutée : « ${title} »`);
+  revalidate();
+  return { ok: true };
+}
+
+export async function createAccess(input: {
+  name: string;
+  description?: string;
+  domain?: ProviderDomain | "";
+  provided_by: OwnerSide;
+  notes?: string;
+}): Promise<ActionResult> {
+  const name = input.name?.trim();
+  if (!name) return { ok: false, error: "Le nom de l'accès est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const auth = await getAuth();
+  const { data, error } = await supabase
+    .from("accesses")
+    .insert({
+      project_id: pid,
+      name,
+      description: input.description?.trim() || null,
+      domain: input.domain ? (input.domain as ProviderDomain) : null,
+      provided_by: input.provided_by,
+      notes: input.notes?.trim() || null,
+      created_by: auth?.user.id ?? null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("access", data.id, "created", `Accès ajouté : « ${name} »`);
+  revalidate();
+  return { ok: true };
+}
+
+export async function createDocument(input: {
+  name: string;
+  category?: string;
+  url?: string;
+  domain?: ProviderDomain | "";
+}): Promise<ActionResult> {
+  const name = input.name?.trim();
+  if (!name) return { ok: false, error: "Le nom du document est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const auth = await getAuth();
+  if (!auth?.user.id) return { ok: false, error: PERM_ERROR };
+  const { data, error } = await supabase
+    .from("documents")
+    .insert({
+      project_id: pid,
+      name,
+      category: input.category?.trim() || null,
+      url: input.url?.trim() || null,
+      domain: input.domain ? (input.domain as ProviderDomain) : null,
+      uploaded_by: auth.user.id,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("document", data.id, "created", `Document ajouté : « ${name} »`);
+  revalidate();
+  return { ok: true };
+}
+
+export async function createRoadmapItem(input: {
+  title: string;
+  description?: string;
+  phase?: string;
+  domain?: ProviderDomain | "";
+  status: RoadmapStatus;
+}): Promise<ActionResult> {
+  const title = input.title?.trim();
+  if (!title) return { ok: false, error: "Le titre est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("roadmap_items")
+    .insert({
+      project_id: pid,
+      title,
+      description: input.description?.trim() || null,
+      phase: input.phase?.trim() || null,
+      domain: input.domain ? (input.domain as ProviderDomain) : null,
+      status: input.status,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity("roadmap", data.id, "created", `Étape ajoutée : « ${title} »`);
+  revalidate();
+  return { ok: true };
+}
+
+export async function updateRoadmapStatus(
+  id: string,
+  status: RoadmapStatus,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("roadmap_items")
+    .update({ status })
+    .eq("id", id)
+    .select("title")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity(
+    "roadmap",
+    id,
+    status,
+    `Étape « ${data.title} » → ${ROADMAP_STATUS_LABELS[status]}`,
+  );
+  revalidate();
+  return { ok: true };
+}
+
+/* ---------------- Delete ---------------- */
+
+export async function deleteTask(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("tasks").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("task", id, "deleted", "Tâche supprimée");
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteQuestion(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("questions").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("question", id, "deleted", "Question supprimée");
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteBlocker(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("blockers").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("blocker", id, "deleted", "Blocage supprimé");
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteDecision(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("decisions").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("decision", id, "deleted", "Décision supprimée");
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteAccess(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("accesses").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("access", id, "deleted", "Accès supprimé");
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteDocument(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("documents").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("document", id, "deleted", "Document supprimé");
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteRoadmapItem(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("roadmap_items").delete().eq("id", id).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await logActivity("roadmap", id, "deleted", "Étape supprimée");
   revalidate();
   return { ok: true };
 }
