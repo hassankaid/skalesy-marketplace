@@ -11,8 +11,13 @@ Plateforme interne de pilotage projet (Skalesy / client / prestataires). Next.js
 ## Conventions
 
 - **shadcn/ui = Base UI** (`@base-ui/react`), pas Radix : pas de `asChild` → utiliser la prop
-  `render={<Comp />}`. Tabs/Select/Dialog/Menu suivent l'API Base UI. Les `DropdownMenuItem`
-  utilisent `onClick` et `variant="destructive"`.
+  `render={<Comp />}`. Tabs/Dialog/Sheet/Avatar suivent l'API Base UI.
+- **EXCEPTION : `DropdownMenu` = Radix** (`@radix-ui/react-dropdown-menu`), donc `asChild` (pas
+  `render`) pour son trigger. Raison : les menus Base UI (positionnement Floating UI) partent en
+  **boucle infinie et plantent en PRODUCTION** ("This page couldn't load"). Bug silencieux en dev
+  (React n'active le garde-fou "Maximum update depth" qu'en dev — cf. React #36423), visible
+  seulement en build de prod. **Ne jamais repasser DropdownMenu en Base UI.** Tester les popups
+  avec `next build` + `next start` (config `skalesy-prod`), pas seulement `next dev`.
 - **Routing du middleware** : fichier `src/proxy.ts` (convention Next 16, ex-`middleware.ts`),
   fonction exportée `proxy`.
 - **Types DB hand-authored** dans `src/lib/database.types.ts` (le token Supabase n'a pas les
