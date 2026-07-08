@@ -7,8 +7,9 @@ import { DomainBadge } from "@/components/app/badges";
 import { DecisionActions } from "@/components/cockpit/decision-actions";
 import { NewDecisionDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
+import { Attachments, type AttachmentView } from "@/components/cockpit/attachments";
 import { DECISION_STATUS_LABELS, type DecisionStatus } from "@/lib/constants";
-import { getDecisions } from "@/lib/queries";
+import { getDecisions, getAttachments } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import type { DecisionRow } from "@/lib/database.types";
 import { formatDate } from "@/lib/format";
@@ -22,10 +23,16 @@ const STATUS_CLASS: Record<DecisionStatus, string> = {
 };
 
 export default async function DecisionsPage() {
-  const [decisions, auth] = await Promise.all([getDecisions(), getAuth()]);
+  const [decisions, auth, attachments] = await Promise.all([
+    getDecisions(),
+    getAuth(),
+    getAttachments("decision"),
+  ]);
   const role = auth?.profile?.role ?? "pending";
+  const userId = auth?.user.id ?? null;
   const canDecide = role === "skalesy_admin" || role === "client";
   const canManage = role === "skalesy_admin";
+  const canAttach = canDecide; // admin ou client peuvent joindre un document
 
   const validated = decisions.filter((d) => d.status === "validated");
   const others = decisions.filter((d) => d.status !== "validated");
@@ -48,7 +55,14 @@ export default async function DecisionsPage() {
           <ul className="divide-y">
             {others.map((d) => (
               <li key={d.id} className="px-5 py-4">
-                <Decision d={d} canDecide={canDecide} canManage={canManage} />
+                <Decision
+                  d={d}
+                  canDecide={canDecide}
+                  canManage={canManage}
+                  canAttach={canAttach}
+                  currentUserId={userId}
+                  attachments={attachments.get(d.id) ?? []}
+                />
               </li>
             ))}
           </ul>
@@ -72,7 +86,14 @@ export default async function DecisionsPage() {
           <ul className="divide-y">
             {validated.map((d) => (
               <li key={d.id} className="px-5 py-4">
-                <Decision d={d} canDecide={canDecide} canManage={canManage} />
+                <Decision
+                  d={d}
+                  canDecide={canDecide}
+                  canManage={canManage}
+                  canAttach={canAttach}
+                  currentUserId={userId}
+                  attachments={attachments.get(d.id) ?? []}
+                />
               </li>
             ))}
           </ul>
@@ -86,10 +107,16 @@ function Decision({
   d,
   canDecide,
   canManage,
+  canAttach,
+  currentUserId,
+  attachments,
 }: {
   d: DecisionRow;
   canDecide: boolean;
   canManage: boolean;
+  canAttach: boolean;
+  currentUserId: string | null;
+  attachments: AttachmentView[];
 }) {
   return (
     <>
@@ -110,6 +137,14 @@ function Decision({
           <span>{d.decision}</span>
         </p>
       )}
+      <Attachments
+        entityType="decision"
+        entityId={d.id}
+        items={attachments}
+        canAttach={canAttach}
+        currentUserId={currentUserId}
+        isAdmin={canManage}
+      />
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <DomainBadge domain={d.domain} />
         {d.decided_at && (

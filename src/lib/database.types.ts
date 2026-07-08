@@ -483,6 +483,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      attachments: {
+        Row: {
+          id: string;
+          project_id: string;
+          entity_type: string;
+          entity_id: string;
+          name: string;
+          url: string | null;
+          storage_path: string | null;
+          mime_type: string | null;
+          size_bytes: number | null;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          entity_type: string;
+          entity_id: string;
+          name: string;
+          url?: string | null;
+          storage_path?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          entity_type?: string;
+          entity_id?: string;
+          name?: string;
+          url?: string | null;
+          storage_path?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       activity_log: {
         Row: {
           id: string;
@@ -551,5 +593,6 @@ export type DecisionRow = Tables<"decisions">;
 export type AccessRow = Tables<"accesses">;
 export type DocumentRow = Tables<"documents">;
 export type RoadmapRow = Tables<"roadmap_items">;
+export type AttachmentRow = Tables<"attachments">;
 export type ActivityRow = Tables<"activity_log">;
 export type AllowedMemberRow = Tables<"allowed_members">;

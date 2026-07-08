@@ -26,6 +26,12 @@ Plateforme interne de pilotage projet (Skalesy / client / prestataires). Next.js
 - **Lectures** : `src/lib/queries.ts` (Server Components, projet en cache par requête).
   **Écritures** : `src/app/actions/cockpit.ts` (Server Actions, `revalidatePath("/","layout")`
   + insertion dans `activity_log`).
+- **Pièces jointes / fichiers** : table `attachments` (polymorphe `entity_type`+`entity_id`,
+  aujourd'hui `question`/`decision`). Les fichiers vont dans le bucket privé Storage
+  `project-docs` ; l'**upload se fait côté client** (`createClient()` navigateur → `storage.upload`)
+  puis la ligne DB est créée via la Server Action `addAttachment`. La lecture génère des
+  **URLs signées** (`getAttachments` dans `queries.ts`). Composant réutilisable
+  `src/components/cockpit/attachments.tsx`.
 - **Auth/rôles** : `src/lib/auth.ts` (`getAuth`, `requireAuth`). Rôles `skalesy_admin` / `client`
   / `provider`. La **RLS Postgres est la source de vérité** ; le gating UI n'est que cosmétique.
 - **Constantes métier** (domaines, statuts, libellés FR, classes de badges) : `src/lib/constants.ts`.

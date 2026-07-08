@@ -11,6 +11,15 @@ export function formatDateShort(value: string | null): string | null {
   return format(new Date(value), "d MMM", { locale: fr });
 }
 
+/** Human-readable file size in French units (o / Ko / Mo). */
+export function formatBytes(value: number | null | undefined): string | null {
+  if (value == null) return null;
+  if (value < 1024) return `${value} o`;
+  const kb = value / 1024;
+  if (kb < 1024) return `${Math.round(kb)} Ko`;
+  return `${(kb / 1024).toFixed(1)} Mo`;
+}
+
 export type DueState = "overdue" | "today" | "soon" | "later";
 
 export function dueState(value: string | null): DueState | null {

@@ -558,6 +558,103 @@ export async function updateRoadmapStatus(
   return { ok: true };
 }
 
+/* ---------------- Attachments ---------------- */
+
+const DOCS_BUCKET = "project-docs";
+
+export async function addAttachment(input: {
+  entity_type: "question" | "decision";
+  entity_id: string;
+  name: string;
+  storage_path?: string;
+  url?: string;
+  mime_type?: string;
+  size_bytes?: number;
+}): Promise<ActionResult> {
+  const name = input.name?.trim();
+  if (!name) return { ok: false, error: "Le nom du document est requis." };
+  if (!input.storage_path && !input.url?.trim())
+    return { ok: false, error: "Un fichier ou un lien est requis." };
+  const pid = await projectId();
+  if (!pid) return { ok: false, error: "Projet introuvable." };
+  const supabase = await createClient();
+  const auth = await getAuth();
+  if (!auth?.user.id) return { ok: false, error: PERM_ERROR };
+  const { data, error } = await supabase
+    .from("attachments")
+    .insert({
+      project_id: pid,
+      entity_type: input.entity_type,
+      entity_id: input.entity_id,
+      name,
+      storage_path: input.storage_path || null,
+      url: input.url?.trim() || null,
+      mime_type: input.mime_type || null,
+      size_bytes: input.size_bytes ?? null,
+      uploaded_by: auth.user.id,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    // The DB row could not be created — drop the orphan file if we just uploaded one.
+    if (input.storage_path) {
+      await supabase.storage.from(DOCS_BUCKET).remove([input.storage_path]);
+    }
+    return { ok: false, error: error.message };
+  }
+  if (!data) return { ok: false, error: PERM_ERROR };
+  await logActivity(
+    input.entity_type,
+    input.entity_id,
+    "attachment",
+    `Document joint : « ${name} »`,
+  );
+  revalidate();
+  return { ok: true };
+}
+
+export async function deleteAttachment(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("attachments")
+    .delete()
+    .eq("id", id)
+    .select("name, storage_path");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: PERM_ERROR };
+  const path = data[0].storage_path;
+  if (path) await supabase.storage.from(DOCS_BUCKET).remove([path]);
+  await logActivity("attachment", id, "deleted", "Document retiré");
+  revalidate();
+  return { ok: true };
+}
+
+/** Best-effort removal of an entity's attachments (rows + stored files). */
+async function cleanupAttachments(entityType: string, entityId: string) {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("attachments")
+      .select("id, storage_path")
+      .eq("entity_type", entityType)
+      .eq("entity_id", entityId);
+    if (!data?.length) return;
+    const paths = data
+      .map((a) => a.storage_path)
+      .filter((p): p is string => !!p);
+    if (paths.length) await supabase.storage.from(DOCS_BUCKET).remove(paths);
+    await supabase
+      .from("attachments")
+      .delete()
+      .in(
+        "id",
+        data.map((a) => a.id),
+      );
+  } catch {
+    // never block the parent deletion
+  }
+}
+
 /* ---------------- Delete ---------------- */
 
 export async function deleteTask(id: string): Promise<ActionResult> {
@@ -575,6 +672,7 @@ export async function deleteQuestion(id: string): Promise<ActionResult> {
   const { data, error } = await supabase.from("questions").delete().eq("id", id).select("id");
   if (error) return { ok: false, error: error.message };
   if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await cleanupAttachments("question", id);
   await logActivity("question", id, "deleted", "Question supprimée");
   revalidate();
   return { ok: true };
@@ -595,6 +693,7 @@ export async function deleteDecision(id: string): Promise<ActionResult> {
   const { data, error } = await supabase.from("decisions").delete().eq("id", id).select("id");
   if (error) return { ok: false, error: error.message };
   if (!data?.length) return { ok: false, error: PERM_ERROR };
+  await cleanupAttachments("decision", id);
   await logActivity("decision", id, "deleted", "Décision supprimée");
   revalidate();
   return { ok: true };

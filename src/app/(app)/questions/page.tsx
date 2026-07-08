@@ -7,8 +7,9 @@ import { DomainBadge, OwnerBadge, PriorityBadge } from "@/components/app/badges"
 import { AnswerQuestionDialog } from "@/components/cockpit/answer-question-dialog";
 import { NewQuestionDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
+import { Attachments } from "@/components/cockpit/attachments";
 import { QUESTION_STATUS_LABELS, type QuestionStatus } from "@/lib/constants";
-import { getQuestions } from "@/lib/queries";
+import { getQuestions, getAttachments } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import type { QuestionRow } from "@/lib/database.types";
@@ -22,8 +23,14 @@ const STATUS_CLASS: Record<QuestionStatus, string> = {
 };
 
 export default async function QuestionsPage() {
-  const [questions, auth] = await Promise.all([getQuestions(), getAuth()]);
+  const [questions, auth, attachments] = await Promise.all([
+    getQuestions(),
+    getAuth(),
+    getAttachments("question"),
+  ]);
   const role = auth?.profile?.role ?? "pending";
+  const userId = auth?.user.id ?? null;
+  const isAdmin = role === "skalesy_admin";
   const userDomain = auth?.profile?.provider_domain ?? null;
 
   const canAnswer = (q: QuestionRow) =>
@@ -50,6 +57,17 @@ export default async function QuestionsPage() {
       )}
       {canDelete(q) && <DeleteButton kind="question" id={q.id} name={q.body} />}
     </div>
+  );
+
+  const attachmentsFor = (q: QuestionRow) => (
+    <Attachments
+      entityType="question"
+      entityId={q.id}
+      items={attachments.get(q.id) ?? []}
+      canAttach={canAnswer(q)}
+      currentUserId={userId}
+      isAdmin={isAdmin}
+    />
   );
 
   return (
@@ -92,6 +110,7 @@ export default async function QuestionsPage() {
                   <OwnerBadge owner={q.directed_to} />
                   {rowActions(q)}
                 </div>
+                {attachmentsFor(q)}
               </li>
             ))}
           </ul>
@@ -126,6 +145,7 @@ export default async function QuestionsPage() {
                   )}
                   {rowActions(q)}
                 </div>
+                {attachmentsFor(q)}
               </li>
             ))}
           </ul>
