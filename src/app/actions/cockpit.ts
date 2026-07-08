@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getAuth } from "@/lib/auth";
 import { getProject } from "@/lib/queries";
 import {
@@ -266,6 +268,80 @@ export async function removeAllowedMember(email: string): Promise<ActionResult> 
     .eq("email", email);
   if (error) return { ok: false, error: error.message };
   await logActivity("member", null, "removed", `Accès retiré : ${email}`);
+  revalidate();
+  return { ok: true };
+}
+
+/**
+ * Authorizes a member (role/domain in `allowed_members`) AND sends them a
+ * Supabase invitation email so they can set their password and sign in.
+ * Admin-only. Degrades gracefully (still authorizes) if the invite can't be sent.
+ */
+export async function inviteMember(input: {
+  email: string;
+  role: "skalesy_admin" | "client" | "provider";
+  provider_domain?: ProviderDomain | "";
+  full_name?: string;
+}): Promise<{ ok: true; warning?: string } | { ok: false; error: string }> {
+  const auth = await getAuth();
+  if (auth?.profile?.role !== "skalesy_admin")
+    return { ok: false, error: PERM_ERROR };
+
+  const email = input.email?.trim().toLowerCase();
+  if (!email || !email.includes("@"))
+    return { ok: false, error: "Email invalide." };
+
+  const domain =
+    input.role === "provider" && input.provider_domain
+      ? (input.provider_domain as ProviderDomain)
+      : null;
+  const fullName = input.full_name?.trim() || null;
+
+  // 1. Authorize (role/domain) — RLS restricts this to admins.
+  const supabase = await createClient();
+  const { error: amErr } = await supabase.from("allowed_members").upsert({
+    email,
+    role: input.role,
+    provider_domain: domain,
+    full_name: fullName,
+  });
+  if (amErr) return { ok: false, error: amErr.message };
+
+  // 2. Send the invitation via the admin API (service_role).
+  const admin = createAdminClient();
+  if (!admin) {
+    await logActivity("member", null, "authorized", `Accès autorisé : ${email}`);
+    revalidate();
+    return {
+      ok: true,
+      warning:
+        "Membre autorisé, mais l'invitation par email n'a pas pu partir (clé service_role absente sur le serveur).",
+    };
+  }
+
+  const h = await headers();
+  const base =
+    h.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const redirectTo = `${base}/auth/callback?next=/definir-mot-de-passe`;
+
+  const { error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
+    redirectTo,
+    data: fullName ? { full_name: fullName } : undefined,
+  });
+
+  if (invErr) {
+    await logActivity("member", null, "authorized", `Accès autorisé : ${email}`);
+    revalidate();
+    const already = /already|registered|exists/i.test(invErr.message);
+    return {
+      ok: true,
+      warning: already
+        ? "Cette personne a déjà un compte — son accès a été mis à jour, aucun nouvel email d'invitation n'a été envoyé."
+        : `Membre autorisé, mais l'invitation n'a pas pu être envoyée : ${invErr.message}`,
+    };
+  }
+
+  await logActivity("member", null, "invited", `Invitation envoyée à ${email}`);
   revalidate();
   return { ok: true };
 }

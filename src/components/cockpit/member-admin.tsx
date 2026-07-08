@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, UserPlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
   PROVIDER_DOMAINS,
   type ProviderDomain,
 } from "@/lib/constants";
-import { addAllowedMember, removeAllowedMember } from "@/app/actions/cockpit";
+import { inviteMember, removeAllowedMember } from "@/app/actions/cockpit";
 import type { AllowedMemberRow } from "@/lib/database.types";
 
 const selectClass =
@@ -34,7 +34,7 @@ export function MemberAdmin({ members }: { members: AllowedMemberRow[] }) {
       return;
     }
     start(async () => {
-      const r = await addAllowedMember({
+      const r = await inviteMember({
         email,
         role,
         provider_domain: role === "provider" ? domain : "",
@@ -44,7 +44,11 @@ export function MemberAdmin({ members }: { members: AllowedMemberRow[] }) {
         toast.error("Échec", { description: r.error });
         return;
       }
-      toast.success("Membre autorisé");
+      if (r.warning) toast.warning("Accès mis à jour", { description: r.warning });
+      else
+        toast.success("Invitation envoyée", {
+          description: `Un email d'invitation a été envoyé à ${email.trim()}.`,
+        });
       setEmail("");
       setFullName("");
     });
@@ -64,7 +68,11 @@ export function MemberAdmin({ members }: { members: AllowedMemberRow[] }) {
     <div className="space-y-4">
       {/* Add form */}
       <div className="rounded-xl border bg-card p-4">
-        <p className="mb-3 text-sm font-semibold">Autoriser un nouvel accès</p>
+        <p className="text-sm font-semibold">Inviter un membre</p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Un email d&apos;invitation est envoyé : la personne définit son mot de
+          passe et accède au cockpit avec le rôle choisi.
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="m-email">Email</Label>
@@ -120,9 +128,9 @@ export function MemberAdmin({ members }: { members: AllowedMemberRow[] }) {
             {pending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              <Plus className="size-4" />
+              <UserPlus className="size-4" />
             )}
-            Autoriser
+            Inviter
           </Button>
         </div>
       </div>
