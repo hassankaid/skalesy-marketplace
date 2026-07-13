@@ -8,6 +8,7 @@ import { DecisionActions } from "@/components/cockpit/decision-actions";
 import { NewDecisionDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
 import { Attachments, type AttachmentView } from "@/components/cockpit/attachments";
+import { MentionText } from "@/components/cockpit/mentions";
 import { DECISION_STATUS_LABELS, type DecisionStatus } from "@/lib/constants";
 import { getDecisions, getAttachments } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
@@ -129,12 +130,16 @@ function Decision({
         </span>
       </div>
       {d.context && (
-        <p className="mt-1 text-xs text-muted-foreground">{d.context}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          <MentionText text={d.context} />
+        </p>
       )}
       {d.decision && (
         <p className="mt-2 flex items-start gap-1.5 text-sm">
           <CircleCheck className="mt-0.5 size-4 shrink-0 text-brand" />
-          <span>{d.decision}</span>
+          <span>
+            <MentionText text={d.decision} />
+          </span>
         </p>
       )}
       <Attachments

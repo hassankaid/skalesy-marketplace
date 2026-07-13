@@ -14,6 +14,7 @@ import { TaskStatusMenu } from "@/components/cockpit/task-status-menu";
 import { AnswerQuestionDialog } from "@/components/cockpit/answer-question-dialog";
 import { AccessStatusMenu } from "@/components/cockpit/access-status-menu";
 import { DecisionActions } from "@/components/cockpit/decision-actions";
+import { MentionText } from "@/components/cockpit/mentions";
 import { getTasks, getQuestions, getAccesses, getDecisions } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
@@ -116,7 +117,9 @@ export default async function ClientPage() {
                 <ul className="divide-y">
                   {clientQuestions.map((q) => (
                     <li key={q.id} className="px-5 py-3">
-                      <p className="text-sm font-medium">{q.body}</p>
+                      <p className="text-sm font-medium">
+                        <MentionText text={q.body} />
+                      </p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <DomainBadge domain={q.domain} />
                         {canAct && (
@@ -190,7 +193,7 @@ export default async function ClientPage() {
                       <p className="text-sm font-medium">{d.title}</p>
                       {d.context && (
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {d.context}
+                          <MentionText text={d.context} />
                         </p>
                       )}
                     </div>

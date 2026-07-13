@@ -7,6 +7,7 @@ import { DomainBadge, PriorityBadge } from "@/components/app/badges";
 import { BlockerActions } from "@/components/cockpit/blocker-actions";
 import { NewBlockerDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
+import { MentionText } from "@/components/cockpit/mentions";
 import { getBlockers } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
@@ -64,7 +65,7 @@ export default async function BlockersPage() {
                   </div>
                   {b.description && (
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {b.description}
+                      <MentionText text={b.description} />
                     </p>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -100,7 +101,9 @@ export default async function BlockersPage() {
                 {b.resolution && (
                   <p className="mt-1.5 flex gap-1.5 text-sm text-muted-foreground">
                     <CornerDownRight className="mt-0.5 size-3.5 shrink-0" />
-                    <span>{b.resolution}</span>
+                    <span>
+                      <MentionText text={b.resolution} />
+                    </span>
                   </p>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">

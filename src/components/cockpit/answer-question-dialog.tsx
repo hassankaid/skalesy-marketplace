@@ -14,7 +14,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/cockpit/mentions";
 import { answerQuestion } from "@/app/actions/cockpit";
 
 export function AnswerQuestionDialog({
@@ -59,11 +59,11 @@ export function AnswerQuestionDialog({
           <DialogTitle>Répondre à la question</DialogTitle>
           <DialogDescription>{question}</DialogDescription>
         </DialogHeader>
-        <Textarea
+        <MentionTextarea
           value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
+          onChange={setAnswer}
           rows={4}
-          placeholder="Votre réponse…"
+          placeholder="Votre réponse… (tapez @ pour mentionner)"
           autoFocus
         />
         <DialogFooter>

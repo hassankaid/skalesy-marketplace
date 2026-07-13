@@ -27,6 +27,7 @@ import {
   AttachmentInputs,
   uploadAndAttach,
 } from "@/components/cockpit/attachments";
+import { MentionTextarea } from "@/components/cockpit/mentions";
 import {
   createQuestion,
   createBlocker,
@@ -192,7 +193,12 @@ export function NewQuestionDialog({
       onSubmit={submit}
     >
       <Field label="Question">
-        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} />
+        <MentionTextarea
+          value={body}
+          onChange={setBody}
+          rows={3}
+          placeholder="Décris la question… (tape @ pour mentionner)"
+        />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Domaine">
@@ -253,7 +259,12 @@ export function NewBlockerDialog({
         <Input value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>
       <Field label="Description">
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+        <MentionTextarea
+          value={description}
+          onChange={setDescription}
+          rows={2}
+          placeholder="Décris le blocage… (tape @ pour mentionner)"
+        />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Domaine">
@@ -309,10 +320,20 @@ export function NewDecisionDialog() {
         <Input value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>
       <Field label="Contexte">
-        <Textarea value={context} onChange={(e) => setContext(e.target.value)} rows={2} />
+        <MentionTextarea
+          value={context}
+          onChange={setContext}
+          rows={2}
+          placeholder="Le contexte… (tape @ pour mentionner)"
+        />
       </Field>
       <Field label="Décision">
-        <Textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={2} />
+        <MentionTextarea
+          value={decision}
+          onChange={setDecision}
+          rows={2}
+          placeholder="La décision prise… (tape @ pour mentionner)"
+        />
       </Field>
       <Field label="Domaine">
         <DomainSelect value={domain} onChange={setDomain} />

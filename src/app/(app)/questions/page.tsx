@@ -8,6 +8,7 @@ import { AnswerQuestionDialog } from "@/components/cockpit/answer-question-dialo
 import { NewQuestionDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
 import { Attachments } from "@/components/cockpit/attachments";
+import { MentionText } from "@/components/cockpit/mentions";
 import { QUESTION_STATUS_LABELS, type QuestionStatus } from "@/lib/constants";
 import { getQuestions, getAttachments } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
@@ -101,7 +102,9 @@ export default async function QuestionsPage() {
             {open.map((q) => (
               <li key={q.id} className="px-5 py-4">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-medium">{q.body}</p>
+                  <p className="text-sm font-medium">
+                    <MentionText text={q.body} />
+                  </p>
                   <PriorityBadge priority={q.priority} />
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -123,7 +126,9 @@ export default async function QuestionsPage() {
             {resolved.map((q) => (
               <li key={q.id} className="px-5 py-4">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-medium">{q.body}</p>
+                  <p className="text-sm font-medium">
+                    <MentionText text={q.body} />
+                  </p>
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[q.status]}`}
                   >
@@ -133,7 +138,9 @@ export default async function QuestionsPage() {
                 {q.answer && (
                   <p className="mt-1.5 flex gap-1.5 text-sm text-muted-foreground">
                     <CornerDownRight className="mt-0.5 size-3.5 shrink-0" />
-                    <span>{q.answer}</span>
+                    <span>
+                      <MentionText text={q.answer} />
+                    </span>
                   </p>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">

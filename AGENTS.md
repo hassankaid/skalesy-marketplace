@@ -32,6 +32,12 @@ Plateforme interne de pilotage projet (Skalesy / client / prestataires). Next.js
   puis la ligne DB est créée via la Server Action `addAttachment`. La lecture génère des
   **URLs signées** (`getAttachments` dans `queries.ts`). Composant réutilisable
   `src/components/cockpit/attachments.tsx`.
+- **@mentions** (`src/components/cockpit/mentions.tsx`) : tag de membres dans les champs texte
+  (réponses, questions, décisions, blocages). **Visuel seulement, aucune notification.** Stocké en
+  clair dans le texte (`@Prénom Nom`). Saisie : `MentionTextarea` (autocomplétion sur `@`). Affichage :
+  `MentionText` surligne les `@Nom` connus. La liste des membres est chargée **côté client** une fois
+  par session (cache module) depuis `profiles`. Pour ajouter un point de tag : `MentionTextarea` en
+  saisie **et** `MentionText` à l'affichage (les deux doivent aller de pair).
 - **Auth/rôles** : `src/lib/auth.ts` (`getAuth`, `requireAuth`). Rôles `skalesy_admin` / `client`
   / `provider`. La **RLS Postgres est la source de vérité** ; le gating UI n'est que cosmétique.
 - **Constantes métier** (domaines, statuts, libellés FR, classes de badges) : `src/lib/constants.ts`.
