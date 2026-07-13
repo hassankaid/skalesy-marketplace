@@ -22,12 +22,14 @@ export function Topbar({
   email,
   projectName,
   progress,
+  inboxCount = 0,
 }: {
   role: UserRole;
   fullName: string | null;
   email: string | null;
   projectName: string | null;
   progress: number | null;
+  inboxCount?: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -47,7 +49,11 @@ export function Topbar({
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto">
-            <SidebarNav role={role} onNavigate={() => setOpen(false)} />
+            <SidebarNav
+              role={role}
+              inboxCount={inboxCount}
+              onNavigate={() => setOpen(false)}
+            />
           </div>
         </SheetContent>
       </Sheet>

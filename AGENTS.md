@@ -38,6 +38,14 @@ Plateforme interne de pilotage projet (Skalesy / client / prestataires). Next.js
   `MentionText` surligne les `@Nom` connus. La liste des membres est chargée **côté client** une fois
   par session (cache module) depuis `profiles`. Pour ajouter un point de tag : `MentionTextarea` en
   saisie **et** `MentionText` à l'affichage (les deux doivent aller de pair).
+- **Notifications** (`/notifications`, badge sidebar) : inbox « À traiter » / « Lu ».
+  Deux natures distinctes — (1) **mentions** = événements persistés dans la table `notifications`
+  (état lu/non-lu via `read_at`), créés par `recordMentions()` dans les Server Actions qui
+  enregistrent un texte (`createQuestion`/`answerQuestion`/`createDecision`/`createBlocker`/
+  `resolveBlocker`) ; (2) **« ce qui m'est adressé »** = calculé en direct depuis les statuts
+  (`getInboxActionables` : questions ouvertes pour moi, tâches assignées, décisions à valider,
+  accès à fournir) — PAS stocké. Le badge = `getInboxCount().total`. Résolution `@Nom → id` via
+  `src/lib/mention-parse.ts` (`extractMentionIds`, insensible aux accents).
 - **Auth/rôles** : `src/lib/auth.ts` (`getAuth`, `requireAuth`). Rôles `skalesy_admin` / `client`
   / `provider`. La **RLS Postgres est la source de vérité** ; le gating UI n'est que cosmétique.
 - **Constantes métier** (domaines, statuts, libellés FR, classes de badges) : `src/lib/constants.ts`.

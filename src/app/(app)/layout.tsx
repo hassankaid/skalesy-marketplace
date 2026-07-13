@@ -1,5 +1,6 @@
 import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getInboxCount } from "@/lib/queries";
 import { AppSidebar } from "@/components/app/app-sidebar";
 import { Topbar } from "@/components/app/topbar";
 import { PendingAccess } from "@/components/app/pending-access";
@@ -32,9 +33,16 @@ export default async function AppLayout({
     // projects table not ready yet — render shell without project header
   }
 
+  let inboxCount = 0;
+  try {
+    inboxCount = (await getInboxCount()).total;
+  } catch {
+    // notifications table not ready yet — hide the badge
+  }
+
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
-      <AppSidebar role={profile.role} />
+      <AppSidebar role={profile.role} inboxCount={inboxCount} />
       <div className="flex min-h-dvh flex-col">
         <Topbar
           role={profile.role}
@@ -42,6 +50,7 @@ export default async function AppLayout({
           email={user.email ?? null}
           projectName={projectName}
           progress={progress}
+          inboxCount={inboxCount}
         />
         <main className="flex-1">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8 lg:py-8">

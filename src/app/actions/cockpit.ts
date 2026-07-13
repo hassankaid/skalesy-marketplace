@@ -5,7 +5,8 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAuth } from "@/lib/auth";
-import { getProject } from "@/lib/queries";
+import { getProject, getProfiles } from "@/lib/queries";
+import { extractMentionIds } from "@/lib/mention-parse";
 import {
   TASK_STATUS_LABELS,
   ACCESS_STATUS_LABELS,
@@ -51,6 +52,78 @@ async function logActivity(
 
 function revalidate() {
   revalidatePath("/", "layout");
+}
+
+/** Parses `@mentions` in a saved text and creates a notification per tagged member. Best-effort. */
+async function recordMentions(
+  entityType: "question" | "decision" | "blocker",
+  entityId: string,
+  text: string | null | undefined,
+) {
+  try {
+    if (!text?.trim()) return;
+    const auth = await getAuth();
+    if (!auth?.user.id) return;
+    const project = await getProject();
+    if (!project) return;
+    const profiles = await getProfiles();
+    const members = profiles
+      .filter(
+        (p) =>
+          p.role === "skalesy_admin" || p.role === "client" || p.role === "provider",
+      )
+      .map((p) => ({
+        id: p.id,
+        name: (p.full_name?.trim() || p.email?.split("@")[0] || "").trim(),
+      }))
+      .filter((m) => m.name);
+    const ids = extractMentionIds(text, members).filter((id) => id !== auth.user.id);
+    if (ids.length === 0) return;
+    const actorName = auth.profile?.full_name ?? auth.profile?.email ?? null;
+    const preview = text.trim().replace(/\s+/g, " ").slice(0, 160);
+    const supabase = await createClient();
+    await supabase.from("notifications").insert(
+      ids.map((rid) => ({
+        project_id: project.id,
+        recipient_id: rid,
+        actor_id: auth.user.id,
+        actor_name: actorName,
+        entity_type: entityType,
+        entity_id: entityId,
+        preview,
+      })),
+    );
+  } catch {
+    // never block the main action
+  }
+}
+
+/* ---------------- Notifications ---------------- */
+
+export async function markNotificationRead(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("read_at", null);
+  if (error) return { ok: false, error: error.message };
+  revalidate();
+  return { ok: true };
+}
+
+export async function markAllNotificationsRead(): Promise<ActionResult> {
+  const auth = await getAuth();
+  if (!auth?.user.id) return { ok: false, error: PERM_ERROR };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("recipient_id", auth.user.id)
+    .is("read_at", null);
+  if (error) return { ok: false, error: error.message };
+  revalidate();
+  return { ok: true };
 }
 
 /* ---------------- Tasks ---------------- */
@@ -138,6 +211,7 @@ export async function answerQuestion(
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("question", id, "answered", `Question répondue : « ${data.body} »`);
+  await recordMentions("question", id, text);
   revalidate();
   return { ok: true };
 }
@@ -214,6 +288,7 @@ export async function resolveBlocker(
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("blocker", id, "resolved", `Blocage résolu : « ${data.title} »`);
+  await recordMentions("blocker", id, resolution);
   revalidate();
   return { ok: true };
 }
@@ -451,6 +526,7 @@ export async function createQuestion(input: {
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("question", data.id, "created", `Question ajoutée : « ${body} »`);
+  await recordMentions("question", data.id, body);
   revalidate();
   return { ok: true, id: data.id };
 }
@@ -482,6 +558,7 @@ export async function createBlocker(input: {
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("blocker", data.id, "created", `Blocage signalé : « ${title} »`);
+  await recordMentions("blocker", data.id, input.description);
   revalidate();
   return { ok: true };
 }
@@ -511,6 +588,11 @@ export async function createDecision(input: {
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("decision", data.id, "created", `Décision ajoutée : « ${title} »`);
+  await recordMentions(
+    "decision",
+    data.id,
+    `${input.context ?? ""}\n${input.decision ?? ""}`,
+  );
   revalidate();
   return { ok: true, id: data.id };
 }

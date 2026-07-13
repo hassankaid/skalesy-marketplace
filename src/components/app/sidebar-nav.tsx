@@ -9,9 +9,11 @@ import { NAV_GROUPS, isNavItemActive } from "./nav-items";
 export function SidebarNav({
   role,
   onNavigate,
+  inboxCount = 0,
 }: {
   role: UserRole;
   onNavigate?: () => void;
+  inboxCount?: number;
 }) {
   const pathname = usePathname();
 
@@ -52,7 +54,12 @@ export function SidebarNav({
                         : "text-muted-foreground group-hover:text-sidebar-accent-foreground",
                     )}
                   />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.href === "/notifications" && inboxCount > 0 && (
+                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-semibold text-white tabular-nums">
+                      {inboxCount > 99 ? "99+" : inboxCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

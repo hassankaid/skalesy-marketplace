@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { deburr, isWordChar } from "@/lib/mention-parse";
 
 export type MentionMember = { id: string; name: string };
 
@@ -55,15 +56,6 @@ export function useMentionMembers(): MentionMember[] {
     };
   }, []);
   return members;
-}
-
-function isWordChar(c: string | undefined) {
-  return !!c && /[\p{L}\p{N}]/u.test(c);
-}
-
-/** Lowercase + strip accents, so "Taieb" matches "Taïeb". */
-function deburr(s: string) {
-  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
 type Part = string | { key: number; name: string };

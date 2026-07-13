@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Bell,
   ListChecks,
   MessagesSquare,
   OctagonAlert,
@@ -30,7 +31,10 @@ export type NavGroup = {
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
-    items: [{ href: "/", label: "Dashboard", icon: LayoutDashboard }],
+    items: [
+      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/notifications", label: "Notifications", icon: Bell },
+    ],
   },
   {
     label: "Suivi",

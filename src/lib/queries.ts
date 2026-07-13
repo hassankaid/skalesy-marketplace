@@ -1,8 +1,15 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getAuth } from "@/lib/auth";
 import type { ProviderDomain } from "@/lib/constants";
-import type { AttachmentRow } from "@/lib/database.types";
+import type {
+  AttachmentRow,
+  QuestionRow,
+  TaskRow,
+  DecisionRow,
+  AccessRow,
+} from "@/lib/database.types";
 
 export const DOCS_BUCKET = "project-docs";
 export type AttachmentItem = AttachmentRow & { href: string | null };
@@ -178,6 +185,93 @@ export async function getAttachments(
   }
   return map;
 }
+
+/** My @mention notifications (most recent first). */
+export const getMyNotifications = cache(async () => {
+  const auth = await getAuth();
+  if (!auth?.user) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("recipient_id", auth.user.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  return data ?? [];
+});
+
+/**
+ * Items that require MY action, computed live from current statuses:
+ * open questions addressed to me, tasks assigned to me, decisions I can
+ * validate, and accesses I must provide.
+ */
+export const getInboxActionables = cache(async () => {
+  const auth = await getAuth();
+  if (!auth?.user) {
+    return {
+      questions: [] as QuestionRow[],
+      tasks: [] as TaskRow[],
+      decisions: [] as DecisionRow[],
+      accesses: [] as AccessRow[],
+    };
+  }
+  const role = auth.profile?.role;
+  const domain = auth.profile?.provider_domain ?? null;
+  const uid = auth.user.id;
+
+  const [tasks, questions, decisions, accesses] = await Promise.all([
+    getTasks(),
+    getQuestions(),
+    getDecisions(),
+    getAccesses(),
+  ]);
+
+  const myQuestions = questions.filter(
+    (q) =>
+      q.status === "open" &&
+      ((role === "client" && q.directed_to === "client") ||
+        (role === "provider" && q.domain != null && q.domain === domain) ||
+        (role === "skalesy_admin" && q.directed_to === "skalesy")),
+  );
+  const myTasks = tasks.filter(
+    (t) => t.assignee_profile_id === uid && t.status !== "done",
+  );
+  const myDecisions =
+    role === "skalesy_admin" || role === "client"
+      ? decisions.filter((d) => d.status === "proposed")
+      : [];
+  const myAccesses = accesses.filter(
+    (a) =>
+      (a.status === "needed" || a.status === "requested") &&
+      ((role === "client" && a.provided_by === "client") ||
+        (role === "provider" &&
+          a.provided_by === "provider" &&
+          (a.domain == null || a.domain === domain)) ||
+        (role === "skalesy_admin" && a.provided_by === "skalesy")),
+  );
+
+  return {
+    questions: myQuestions,
+    tasks: myTasks,
+    decisions: myDecisions,
+    accesses: myAccesses,
+  };
+});
+
+/** Count for the sidebar badge: unread mentions + pending actionables. */
+export const getInboxCount = cache(async () => {
+  const [notifs, act] = await Promise.all([
+    getMyNotifications(),
+    getInboxActionables(),
+  ]);
+  const unread = notifs.filter((n) => !n.read_at).length;
+  const actionable =
+    act.questions.length +
+    act.tasks.length +
+    act.decisions.length +
+    act.accesses.length;
+  return { unread, actionable, total: unread + actionable };
+});
 
 export async function getActivity(limit = 12) {
   const pid = await projectId();
