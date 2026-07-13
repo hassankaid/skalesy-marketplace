@@ -24,6 +24,10 @@ import {
   selectClass,
 } from "@/components/cockpit/fields";
 import {
+  AttachmentInputs,
+  uploadAndAttach,
+} from "@/components/cockpit/attachments";
+import {
   createQuestion,
   createBlocker,
   createDecision,
@@ -91,6 +95,62 @@ function FormDialog({
   );
 }
 
+/* --- Optional attachment at creation --- */
+
+function useAttachmentPicker() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkName, setLinkName] = useState("");
+  return {
+    files,
+    setFiles,
+    linkUrl,
+    setLinkUrl,
+    linkName,
+    setLinkName,
+    reset: () => {
+      setFiles([]);
+      setLinkUrl("");
+      setLinkName("");
+    },
+    hasAny: files.length > 0 || linkUrl.trim().length > 0,
+    flush: (entityType: "question" | "decision", entityId: string) =>
+      uploadAndAttach(entityType, entityId, files, { url: linkUrl, name: linkName }),
+  };
+}
+
+type Picker = ReturnType<typeof useAttachmentPicker>;
+
+/** Applies attachments after the entity is created; returns a toast suffix. */
+async function flushDoc(
+  picker: Picker,
+  entityType: "question" | "decision",
+  entityId: string,
+): Promise<string> {
+  if (!picker.hasAny) return "";
+  const { added, errors } = await picker.flush(entityType, entityId);
+  errors.forEach((e) => toast.error("Pièce jointe", { description: e }));
+  if (added <= 0) return "";
+  return added > 1 ? ` · ${added} documents joints` : " · document joint";
+}
+
+function OptionalDoc({ picker, idPrefix }: { picker: Picker; idPrefix: string }) {
+  return (
+    <div className="space-y-2 rounded-lg border border-dashed bg-muted/20 p-3">
+      <Label className="text-xs text-muted-foreground">Document (optionnel)</Label>
+      <AttachmentInputs
+        idPrefix={idPrefix}
+        files={picker.files}
+        setFiles={picker.setFiles}
+        linkUrl={picker.linkUrl}
+        setLinkUrl={picker.setLinkUrl}
+        linkName={picker.linkName}
+        setLinkName={picker.setLinkName}
+      />
+    </div>
+  );
+}
+
 /* --- Question --- */
 
 export function NewQuestionDialog({
@@ -104,6 +164,7 @@ export function NewQuestionDialog({
   const [domain, setDomain] = useState<ProviderDomain | "">(defaultDomain ?? "");
   const [directedTo, setDirectedTo] = useState<OwnerSide>("client");
   const [priority, setPriority] = useState<Priority>("medium");
+  const doc = useAttachmentPicker();
 
   function submit() {
     if (!body.trim()) return toast.error("La question est requise.");
@@ -113,9 +174,11 @@ export function NewQuestionDialog({
         toast.error("Création impossible", { description: r.error });
         return;
       }
-      toast.success("Question ajoutée");
+      const suffix = await flushDoc(doc, "question", r.id);
+      toast.success("Question ajoutée" + suffix);
       setOpen(false);
       setBody("");
+      doc.reset();
     });
   }
 
@@ -142,6 +205,7 @@ export function NewQuestionDialog({
       <Field label="Priorité">
         <PrioritySelect value={priority} onChange={setPriority} />
       </Field>
+      <OptionalDoc picker={doc} idPrefix="q-att" />
     </FormDialog>
   );
 }
@@ -212,6 +276,7 @@ export function NewDecisionDialog() {
   const [context, setContext] = useState("");
   const [decision, setDecision] = useState("");
   const [domain, setDomain] = useState<ProviderDomain | "">("");
+  const doc = useAttachmentPicker();
 
   function submit() {
     if (!title.trim()) return toast.error("Le titre est requis.");
@@ -221,11 +286,13 @@ export function NewDecisionDialog() {
         toast.error("Création impossible", { description: r.error });
         return;
       }
-      toast.success("Décision ajoutée");
+      const suffix = await flushDoc(doc, "decision", r.id);
+      toast.success("Décision ajoutée" + suffix);
       setOpen(false);
       setTitle("");
       setContext("");
       setDecision("");
+      doc.reset();
     });
   }
 
@@ -250,6 +317,7 @@ export function NewDecisionDialog() {
       <Field label="Domaine">
         <DomainSelect value={domain} onChange={setDomain} />
       </Field>
+      <OptionalDoc picker={doc} idPrefix="d-att" />
     </FormDialog>
   );
 }

@@ -429,7 +429,7 @@ export async function createQuestion(input: {
   domain?: ProviderDomain | "";
   directed_to: OwnerSide;
   priority: Priority;
-}): Promise<ActionResult> {
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const body = input.body?.trim();
   if (!body) return { ok: false, error: "La question est requise." };
   const pid = await projectId();
@@ -452,7 +452,7 @@ export async function createQuestion(input: {
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("question", data.id, "created", `Question ajoutée : « ${body} »`);
   revalidate();
-  return { ok: true };
+  return { ok: true, id: data.id };
 }
 
 export async function createBlocker(input: {
@@ -491,7 +491,7 @@ export async function createDecision(input: {
   context?: string;
   decision?: string;
   domain?: ProviderDomain | "";
-}): Promise<ActionResult> {
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const title = input.title?.trim();
   if (!title) return { ok: false, error: "Le titre est requis." };
   const pid = await projectId();
@@ -512,7 +512,7 @@ export async function createDecision(input: {
   if (!data) return { ok: false, error: PERM_ERROR };
   await logActivity("decision", data.id, "created", `Décision ajoutée : « ${title} »`);
   revalidate();
-  return { ok: true };
+  return { ok: true, id: data.id };
 }
 
 export async function createAccess(input: {

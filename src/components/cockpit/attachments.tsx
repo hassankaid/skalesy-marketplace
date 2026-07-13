@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Paperclip,
@@ -28,7 +28,9 @@ import { addAttachment, deleteAttachment } from "@/app/actions/cockpit";
 import { formatBytes } from "@/lib/format";
 
 const BUCKET = "project-docs";
-const MAX_BYTES = 25 * 1024 * 1024; // 25 Mo
+export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024; // 25 Mo
+
+export type EntityType = "question" | "decision";
 
 export type AttachmentView = {
   id: string;
@@ -38,6 +40,142 @@ export type AttachmentView = {
   uploaded_by: string | null;
 };
 
+/**
+ * Uploads the given files to Storage and records each as an attachment row,
+ * plus an optional external link. Returns how many were added and any errors.
+ * Shared by the "add later" dialog and the create dialogs.
+ */
+export async function uploadAndAttach(
+  entityType: EntityType,
+  entityId: string,
+  files: File[],
+  link: { url: string; name: string },
+): Promise<{ added: number; errors: string[] }> {
+  const supabase = createClient();
+  let added = 0;
+  const errors: string[] = [];
+
+  for (const file of files) {
+    const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-120);
+    const path = `${entityType}/${entityId}/${crypto.randomUUID()}-${safe}`;
+    const { error: upErr } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { contentType: file.type || undefined, upsert: false });
+    if (upErr) {
+      errors.push(`${file.name} : ${upErr.message}`);
+      continue;
+    }
+    const r = await addAttachment({
+      entity_type: entityType,
+      entity_id: entityId,
+      name: file.name,
+      storage_path: path,
+      mime_type: file.type || undefined,
+      size_bytes: file.size,
+    });
+    if (r.ok) added += 1;
+    else errors.push(r.error);
+  }
+
+  const url = link.url.trim();
+  if (url) {
+    const r = await addAttachment({
+      entity_type: entityType,
+      entity_id: entityId,
+      name: link.name.trim() || url,
+      url,
+    });
+    if (r.ok) added += 1;
+    else errors.push(r.error);
+  }
+
+  return { added, errors };
+}
+
+/** File picker + external-link fields, controlled by the parent. */
+export function AttachmentInputs({
+  idPrefix = "att",
+  files,
+  setFiles,
+  linkUrl,
+  setLinkUrl,
+  linkName,
+  setLinkName,
+}: {
+  idPrefix?: string;
+  files: File[];
+  setFiles: (f: File[]) => void;
+  linkUrl: string;
+  setLinkUrl: (v: string) => void;
+  linkName: string;
+  setLinkName: (v: string) => void;
+}) {
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    const tooBig = picked.find((f) => f.size > MAX_ATTACHMENT_BYTES);
+    if (tooBig) {
+      toast.error("Fichier trop volumineux", {
+        description: `« ${tooBig.name} » dépasse 25 Mo.`,
+      });
+      return;
+    }
+    setFiles(picked);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor={`${idPrefix}-file`}>Fichier</Label>
+        <label
+          htmlFor={`${idPrefix}-file`}
+          className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted/40"
+        >
+          <UploadCloud className="size-4 shrink-0" />
+          <span className="truncate">
+            {files.length > 0
+              ? files.map((f) => f.name).join(", ")
+              : "Choisir un ou plusieurs fichiers…"}
+          </span>
+        </label>
+        <input
+          id={`${idPrefix}-file`}
+          type="file"
+          multiple
+          className="sr-only"
+          onChange={onPick}
+        />
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        ou un lien
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-url`}>Lien (URL)</Label>
+          <Input
+            id={`${idPrefix}-url`}
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="https://…"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-name`}>Intitulé (optionnel)</Label>
+          <Input
+            id={`${idPrefix}-name`}
+            value={linkName}
+            onChange={(e) => setLinkName(e.target.value)}
+            placeholder="Ex. Maquette Figma"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Attachments({
   entityType,
   entityId,
@@ -46,7 +184,7 @@ export function Attachments({
   currentUserId,
   isAdmin,
 }: {
-  entityType: "question" | "decision";
+  entityType: EntityType;
   entityId: string;
   items: AttachmentView[];
   canAttach: boolean;
@@ -127,7 +265,7 @@ function AddAttachmentDialog({
   entityType,
   entityId,
 }: {
-  entityType: "question" | "decision";
+  entityType: EntityType;
   entityId: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -135,75 +273,24 @@ function AddAttachmentDialog({
   const [files, setFiles] = useState<File[]>([]);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
-  const fileInput = useRef<HTMLInputElement>(null);
 
   function reset() {
     setFiles([]);
     setLinkUrl("");
     setLinkName("");
-    if (fileInput.current) fileInput.current.value = "";
-  }
-
-  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files ?? []);
-    const tooBig = picked.find((f) => f.size > MAX_BYTES);
-    if (tooBig) {
-      toast.error("Fichier trop volumineux", {
-        description: `« ${tooBig.name} » dépasse 25 Mo.`,
-      });
-      return;
-    }
-    setFiles(picked);
   }
 
   function submit() {
-    const url = linkUrl.trim();
-    if (files.length === 0 && !url) {
+    if (files.length === 0 && !linkUrl.trim()) {
       toast.error("Choisissez un fichier ou saisissez un lien.");
       return;
     }
     start(async () => {
-      const supabase = createClient();
-      let added = 0;
-
-      for (const file of files) {
-        const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-120);
-        const path = `${entityType}/${entityId}/${crypto.randomUUID()}-${safe}`;
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(path, file, {
-            contentType: file.type || undefined,
-            upsert: false,
-          });
-        if (upErr) {
-          toast.error("Envoi impossible", {
-            description: `${file.name} : ${upErr.message}`,
-          });
-          continue;
-        }
-        const r = await addAttachment({
-          entity_type: entityType,
-          entity_id: entityId,
-          name: file.name,
-          storage_path: path,
-          mime_type: file.type || undefined,
-          size_bytes: file.size,
-        });
-        if (r.ok) added += 1;
-        else toast.error("Enregistrement impossible", { description: r.error });
-      }
-
-      if (url) {
-        const r = await addAttachment({
-          entity_type: entityType,
-          entity_id: entityId,
-          name: linkName.trim() || url,
-          url,
-        });
-        if (r.ok) added += 1;
-        else toast.error("Lien invalide", { description: r.error });
-      }
-
+      const { added, errors } = await uploadAndAttach(entityType, entityId, files, {
+        url: linkUrl,
+        name: linkName,
+      });
+      errors.forEach((e) => toast.error("Pièce jointe", { description: e }));
       if (added > 0) {
         toast.success(added > 1 ? `${added} documents joints` : "Document joint");
         reset();
@@ -237,55 +324,14 @@ function AddAttachmentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="att-file">Fichier</Label>
-            <label
-              htmlFor="att-file"
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted/40"
-            >
-              <UploadCloud className="size-4 shrink-0" />
-              {files.length > 0
-                ? files.map((f) => f.name).join(", ")
-                : "Choisir un ou plusieurs fichiers…"}
-            </label>
-            <input
-              ref={fileInput}
-              id="att-file"
-              type="file"
-              multiple
-              className="sr-only"
-              onChange={onPick}
-            />
-          </div>
-
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            ou un lien
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="att-url">Lien (URL)</Label>
-              <Input
-                id="att-url"
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                placeholder="https://…"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="att-name">Intitulé (optionnel)</Label>
-              <Input
-                id="att-name"
-                value={linkName}
-                onChange={(e) => setLinkName(e.target.value)}
-                placeholder="Ex. Maquette Figma"
-              />
-            </div>
-          </div>
-        </div>
+        <AttachmentInputs
+          files={files}
+          setFiles={setFiles}
+          linkUrl={linkUrl}
+          setLinkUrl={setLinkUrl}
+          linkName={linkName}
+          setLinkName={setLinkName}
+        />
 
         <DialogFooter>
           <DialogClose render={<Button variant="outline" />}>Annuler</DialogClose>
