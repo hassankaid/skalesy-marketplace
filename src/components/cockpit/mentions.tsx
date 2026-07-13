@@ -61,6 +61,11 @@ function isWordChar(c: string | undefined) {
   return !!c && /[\p{L}\p{N}]/u.test(c);
 }
 
+/** Lowercase + strip accents, so "Taieb" matches "Taïeb". */
+function deburr(s: string) {
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
 type Part = string | { key: number; name: string };
 
 function parseMentions(text: string, members: MentionMember[]): Part[] {
@@ -160,8 +165,8 @@ export function MentionTextarea({
 
   const suggestions = useMemo(() => {
     if (query == null) return [];
-    const q = query.toLowerCase();
-    return members.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 6);
+    const q = deburr(query);
+    return members.filter((m) => deburr(m.name).includes(q)).slice(0, 50);
   }, [query, members]);
 
   function syncQuery(v: string, caret: number) {
