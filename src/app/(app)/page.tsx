@@ -23,10 +23,22 @@ import { StatCard } from "@/components/app/stat-card";
 import { SectionCard } from "@/components/app/section-card";
 import { EmptyState } from "@/components/app/empty-state";
 import { StatusBadge, DomainBadge } from "@/components/app/badges";
+import { ProgressRing } from "@/components/app/progress-ring";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProjectSettingsDialog } from "@/components/cockpit/project-settings-dialog";
 import { getAuth } from "@/lib/auth";
 import { PROVIDER_DOMAINS, type ProviderDomain } from "@/lib/constants";
 import { formatDate, dueState, DUE_STATE_CLASS } from "@/lib/format";
+
+function initials(name: string | null) {
+  const base = name?.trim();
+  if (!base) return "?";
+  const parts = base.split(/[\s._-]+/).filter(Boolean);
+  return (
+    ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() ||
+    base[0]!.toUpperCase()
+  );
+}
 
 export default async function DashboardPage() {
   const [project, tasks, questions, blockers, accesses, workspaces, activity, auth] =
@@ -69,14 +81,18 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Project header */}
-      <section className="rounded-xl border bg-card p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+      <section className="shadow-card relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 sm:p-7">
+        <div
+          aria-hidden
+          className="gradient-brand pointer-events-none absolute -top-24 -right-20 size-64 rounded-full opacity-[0.07] blur-2xl"
+        />
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl space-y-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
               <span className="size-1.5 rounded-full bg-emerald-500" />
               Projet actif
             </span>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {project.name}
             </h1>
             {project.description && (
@@ -89,9 +105,9 @@ export default async function DashboardPage() {
                 {objectives.map((o, i) => (
                   <li
                     key={i}
-                    className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs text-foreground/80"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-foreground/80"
                   >
-                    <CircleCheck className="size-3.5 text-brand" />
+                    <CircleCheck className="size-3.5 text-brand dark:text-fuchsia-300" />
                     {o}
                   </li>
                 ))}
@@ -99,30 +115,30 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          <div className="w-full shrink-0 rounded-xl border bg-muted/30 p-4 lg:w-64">
-            <p className="text-xs font-medium text-muted-foreground">
-              Avancement global
-            </p>
-            <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">
-              {project.progress}%
-            </p>
-            <Progress value={project.progress} className="mt-2 h-2" />
-            <dl className="mt-4 space-y-1.5 text-xs">
-              {project.start_date && (
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Démarrage</dt>
-                  <dd className="font-medium">{formatDate(project.start_date)}</dd>
-                </div>
-              )}
-              {project.target_date && (
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Échéance cible</dt>
-                  <dd className="font-medium">{formatDate(project.target_date)}</dd>
-                </div>
-              )}
-            </dl>
+          <div className="flex w-full shrink-0 flex-col items-center gap-5 rounded-2xl border border-border/70 bg-muted/25 p-5 lg:w-64">
+            <ProgressRing value={project.progress} size={132} />
+            {(project.start_date || project.target_date) && (
+              <dl className="w-full space-y-1.5 text-xs">
+                {project.start_date && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Démarrage</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatDate(project.start_date)}
+                    </dd>
+                  </div>
+                )}
+                {project.target_date && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Échéance cible</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatDate(project.target_date)}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
             {isAdmin && (
-              <div className="mt-4">
+              <div className="w-full">
                 <ProjectSettingsDialog
                   project={{
                     name: project.name,
@@ -304,8 +320,8 @@ export default async function DashboardPage() {
                       href={`/prestataires/${w.domain}`}
                       className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
                     >
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-                        <Icon className="size-4 text-muted-foreground" />
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                        <Icon className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{d.short}</p>
@@ -327,19 +343,37 @@ export default async function DashboardPage() {
                 <EmptyState icon={Activity} title="Aucune activité" />
               </div>
             ) : (
-              <ul className="divide-y">
-                {activity.map((a) => (
-                  <li key={a.id} className="flex gap-3 px-5 py-3">
-                    <div className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm leading-snug">{a.summary}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {a.actor_name ?? "Système"} ·{" "}
-                        {formatDate(a.created_at, "d MMM, HH:mm")}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+              <ul className="p-5">
+                {activity.map((a, i) => {
+                  const last = i === activity.length - 1;
+                  return (
+                    <li key={a.id} className="flex gap-3.5">
+                      <div className="flex flex-col items-center">
+                        {a.actor_name ? (
+                          <Avatar className="size-8 ring-4 ring-card">
+                            <AvatarFallback className="text-[0.62rem]">
+                              {initials(a.actor_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <span className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground ring-4 ring-card">
+                            <Activity className="size-3.5" />
+                          </span>
+                        )}
+                        {!last && (
+                          <span className="mt-1 w-px flex-1 bg-border" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 pb-5">
+                        <p className="text-sm leading-snug">{a.summary}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {a.actor_name ?? "Système"} ·{" "}
+                          {formatDate(a.created_at, "d MMM, HH:mm")}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </SectionCard>
