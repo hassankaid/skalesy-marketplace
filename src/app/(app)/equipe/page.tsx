@@ -43,7 +43,7 @@ export default async function TeamPage() {
             {profiles.map((p) => (
               <li key={p.id} className="flex items-center gap-3 px-5 py-3">
                 <Avatar className="size-9 border">
-                  <AvatarFallback className="bg-accent text-xs font-semibold text-accent-foreground">
+                  <AvatarFallback className="text-xs">
                     {initials(p.full_name, p.email)}
                   </AvatarFallback>
                 </Avatar>

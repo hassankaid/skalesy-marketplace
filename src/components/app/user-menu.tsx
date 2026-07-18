@@ -43,7 +43,7 @@ export function UserMenu({
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 rounded-full outline-none ring-ring focus-visible:ring-2">
         <Avatar className="size-9 border">
-          <AvatarFallback className="bg-accent text-xs font-semibold text-accent-foreground">
+          <AvatarFallback className="text-xs">
             {initials(fullName, email)}
           </AvatarFallback>
         </Avatar>

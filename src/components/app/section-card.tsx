@@ -18,11 +18,18 @@ export function SectionCard({
   noPadding?: boolean;
 }) {
   return (
-    <section className={cn("overflow-hidden rounded-xl border bg-card", className)}>
+    <section
+      className={cn(
+        "shadow-card overflow-hidden rounded-2xl border border-border/70 bg-card",
+        className,
+      )}
+    >
       {(title || action) && (
-        <header className="flex items-center justify-between gap-3 border-b px-5 py-3.5">
+        <header className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
           <div className="min-w-0">
-            {title && <h2 className="text-sm font-semibold">{title}</h2>}
+            {title && (
+              <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+            )}
             {description && (
               <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
             )}

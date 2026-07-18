@@ -7,6 +7,7 @@ import {
   PRIORITY_BADGE_CLASS,
   PROVIDER_DOMAINS,
   OWNER_SIDE_LABELS,
+  TINT,
   type TaskStatus,
   type Priority,
   type ProviderDomain,
@@ -91,9 +92,9 @@ export function DomainBadge({
 }
 
 const OWNER_BADGE_CLASS: Record<OwnerSide, string> = {
-  skalesy: "bg-violet-100 text-violet-700 ring-1 ring-violet-200",
-  client: "bg-sky-100 text-sky-700 ring-1 ring-sky-200",
-  provider: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
+  skalesy: TINT.brand,
+  client: TINT.sky,
+  provider: TINT.slate,
 };
 
 export function OwnerBadge({

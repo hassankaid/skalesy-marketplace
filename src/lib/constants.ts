@@ -8,6 +8,34 @@ import {
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
+/* Tinted-pill palette — theme-aware (light + dark)                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Soft tinted-pill classes shared by every status / priority / owner badge.
+ * Kept as whole literal strings so Tailwind's JIT sees each utility, and each
+ * carries a `dark:` variant so a single class works in both themes.
+ */
+export const TINT: Record<
+  "slate" | "amber" | "red" | "blue" | "emerald" | "orange" | "sky" | "brand",
+  string
+> = {
+  slate:
+    "bg-slate-50 text-slate-700 ring-1 ring-slate-600/15 dark:bg-slate-400/10 dark:text-slate-300 dark:ring-slate-400/20",
+  amber:
+    "bg-amber-50 text-amber-700 ring-1 ring-amber-600/15 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/25",
+  red: "bg-red-50 text-red-700 ring-1 ring-red-600/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/25",
+  blue: "bg-blue-50 text-blue-700 ring-1 ring-blue-600/15 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/25",
+  emerald:
+    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/25",
+  orange:
+    "bg-orange-50 text-orange-700 ring-1 ring-orange-600/15 dark:bg-orange-400/10 dark:text-orange-300 dark:ring-orange-400/25",
+  sky: "bg-sky-50 text-sky-700 ring-1 ring-sky-600/15 dark:bg-sky-400/10 dark:text-sky-300 dark:ring-sky-400/25",
+  brand:
+    "bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-600/15 dark:bg-fuchsia-400/10 dark:text-fuchsia-300 dark:ring-fuchsia-400/25",
+};
+
+/* ------------------------------------------------------------------ */
 /* Roles                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -109,16 +137,12 @@ export const TASK_STATUS_ORDER: TaskStatus[] = [
   "done",
 ];
 
-/**
- * Literal Tailwind classes (kept whole so the JIT compiler can see them).
- * Soft tinted pill — sober but instantly readable.
- */
 export const STATUS_BADGE_CLASS: Record<TaskStatus, string> = {
-  todo: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-  waiting: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
-  blocked: "bg-red-100 text-red-700 ring-1 ring-red-200",
-  in_progress: "bg-blue-100 text-blue-700 ring-1 ring-blue-200",
-  done: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
+  todo: TINT.slate,
+  waiting: TINT.amber,
+  blocked: TINT.red,
+  in_progress: TINT.blue,
+  done: TINT.emerald,
 };
 
 export const STATUS_DOT_CLASS: Record<TaskStatus, string> = {
@@ -143,10 +167,10 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
 };
 
 export const PRIORITY_BADGE_CLASS: Record<Priority, string> = {
-  low: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
-  medium: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-  high: "bg-orange-100 text-orange-700 ring-1 ring-orange-200",
-  urgent: "bg-red-100 text-red-700 ring-1 ring-red-200",
+  low: TINT.slate,
+  medium: TINT.slate,
+  high: TINT.orange,
+  urgent: TINT.red,
 };
 
 /* ------------------------------------------------------------------ */
@@ -159,6 +183,11 @@ export const QUESTION_STATUS_LABELS: Record<QuestionStatus, string> = {
   answered: "Répondue",
   closed: "Clôturée",
 };
+export const QUESTION_STATUS_BADGE_CLASS: Record<QuestionStatus, string> = {
+  open: TINT.amber,
+  answered: TINT.emerald,
+  closed: TINT.slate,
+};
 
 export type DecisionStatus = "proposed" | "validated" | "rejected";
 export const DECISION_STATUS_LABELS: Record<DecisionStatus, string> = {
@@ -166,11 +195,20 @@ export const DECISION_STATUS_LABELS: Record<DecisionStatus, string> = {
   validated: "Validée",
   rejected: "Écartée",
 };
+export const DECISION_STATUS_BADGE_CLASS: Record<DecisionStatus, string> = {
+  proposed: TINT.amber,
+  validated: TINT.emerald,
+  rejected: TINT.slate,
+};
 
 export type BlockerStatus = "open" | "resolved";
 export const BLOCKER_STATUS_LABELS: Record<BlockerStatus, string> = {
   open: "Ouvert",
   resolved: "Résolu",
+};
+export const BLOCKER_STATUS_BADGE_CLASS: Record<BlockerStatus, string> = {
+  open: TINT.amber,
+  resolved: TINT.emerald,
 };
 
 export type AccessStatus = "needed" | "requested" | "provided" | "confirmed";
@@ -181,10 +219,10 @@ export const ACCESS_STATUS_LABELS: Record<AccessStatus, string> = {
   confirmed: "Confirmé",
 };
 export const ACCESS_STATUS_BADGE_CLASS: Record<AccessStatus, string> = {
-  needed: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-  requested: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
-  provided: "bg-blue-100 text-blue-700 ring-1 ring-blue-200",
-  confirmed: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
+  needed: TINT.slate,
+  requested: TINT.amber,
+  provided: TINT.blue,
+  confirmed: TINT.emerald,
 };
 
 export type RoadmapStatus = "planned" | "in_progress" | "done";
@@ -192,4 +230,14 @@ export const ROADMAP_STATUS_LABELS: Record<RoadmapStatus, string> = {
   planned: "Planifié",
   in_progress: "En cours",
   done: "Terminé",
+};
+export const ROADMAP_STATUS_DOT_CLASS: Record<RoadmapStatus, string> = {
+  planned: "bg-slate-400",
+  in_progress: "bg-blue-500",
+  done: "bg-emerald-500",
+};
+export const ROADMAP_STATUS_BADGE_CLASS: Record<RoadmapStatus, string> = {
+  planned: TINT.slate,
+  in_progress: TINT.blue,
+  done: TINT.emerald,
 };
