@@ -1,30 +1,22 @@
 # Logos Skalesy
 
-La plateforme utilise par défaut un **wordmark recréé** (composant `src/components/brand/logo.tsx`,
-teinté via `currentColor`, fonctionne sur fond clair et foncé).
+Assets officiels de la marque, utilisés par `src/components/brand/logo.tsx` (via `next/image`).
+Recadrés et redimensionnés depuis le kit `IDENTITÉE VISUELLE` (les originaux font 5000×5000 px).
 
-## Utiliser les logos officiels
+| Fichier | Usage |
+|---|---|
+| `wordmark-black.png` | Wordmark « Skalesy » noir — surfaces claires (`<Logo variant="black">` ou `auto` en thème clair). |
+| `wordmark-white.png` | Wordmark blanc — rail dégradé, thème sombre (`variant="white"` ou `auto` en sombre). |
+| `sk-white.png` | Monogramme `sK` blanc — composé dans le badge dégradé `LogoMark` et le favicon. |
+| `sk-black.png` | Monogramme `sK` noir — variantes sur fond clair si besoin. |
 
-1. Dépose les fichiers fournis ici :
-   - `skalesy-black.png` (logo noir, fond transparent)
-   - `skalesy-white.png` (logo blanc, fond transparent)
-2. Dans `src/components/brand/logo.tsx`, remplace le `<span>` du composant `Logo` par :
+Le favicon (`src/app/icon.png`) est un badge circulaire au dégradé de marque + `sK` blanc,
+généré à partir de `sk-white.png`.
 
-   ```tsx
-   import Image from "next/image";
+## Composants
+- `LogoMark` — badge circulaire `.gradient-brand` + `sK` blanc (nav, avatars, favicon).
+- `Logo` / `LogoWordmark` — wordmark, `variant="auto" | "black" | "white"`, taille par classe de hauteur (`h-6`).
+- `LogoLockup` — badge + wordmark côte à côte.
 
-   export function Logo({ className }: { className?: string }) {
-     return (
-       <Image
-         src="/brand/skalesy-black.png"
-         alt="Skalesy"
-         width={120}
-         height={32}
-         className={className}
-         priority
-       />
-     );
-   }
-   ```
-
-   (Utilise `skalesy-white.png` pour les fonds foncés, ex. sidebar en mode sombre.)
+Pour régénérer des assets (recadrage sur la zone opaque + redimensionnement), voir l'historique
+de génération dans la session de refonte (script PowerShell `System.Drawing`).

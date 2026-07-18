@@ -39,8 +39,8 @@ export default async function LoginPage({
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <LogoMark className="size-11" />
-          <Logo className="text-2xl" />
+          <LogoMark className="size-12" />
+          <Logo className="h-7" />
           <p className="text-sm text-muted-foreground">
             Cockpit projet — pilotage de la marketplace
           </p>

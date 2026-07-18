@@ -8,8 +8,8 @@ export function PendingAccess({ email }: { email: string | null }) {
     <main className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="w-full max-w-md text-center">
         <div className="mb-6 flex flex-col items-center gap-3">
-          <LogoMark className="size-11" />
-          <Logo className="text-2xl" />
+          <LogoMark className="size-12" />
+          <Logo className="h-7" />
         </div>
         <div className="rounded-2xl border bg-card p-8 shadow-sm">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">

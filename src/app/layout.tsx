@@ -1,13 +1,34 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const inter = Inter({
+/** Sofia Pro — the Skalesy brand typeface, self-hosted across the whole UI. */
+const sofiaPro = localFont({
   variable: "--font-sans",
-  subsets: ["latin"],
   display: "swap",
+  fallback: [
+    "ui-sans-serif",
+    "system-ui",
+    "-apple-system",
+    "Segoe UI",
+    "Roboto",
+    "Helvetica",
+    "Arial",
+    "sans-serif",
+  ],
+  src: [
+    { path: "../fonts/sofia-pro/SofiaPro-Regular.ttf", weight: "400", style: "normal" },
+    { path: "../fonts/sofia-pro/SofiaPro-Italic.ttf", weight: "400", style: "italic" },
+    { path: "../fonts/sofia-pro/SofiaPro-Medium.ttf", weight: "500", style: "normal" },
+    { path: "../fonts/sofia-pro/SofiaPro-SemiBold.ttf", weight: "600", style: "normal" },
+    { path: "../fonts/sofia-pro/SofiaPro-SemiBoldItalic.ttf", weight: "600", style: "italic" },
+    { path: "../fonts/sofia-pro/SofiaPro-Bold.ttf", weight: "700", style: "normal" },
+    { path: "../fonts/sofia-pro/SofiaPro-Black.ttf", weight: "900", style: "normal" },
+  ],
 });
 
 const geistMono = Geist_Mono({
@@ -33,12 +54,19 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sofiaPro.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full">
-        <TooltipProvider>{children}</TooltipProvider>
-        <Toaster richColors position="top-right" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <TooltipProvider>{children}</TooltipProvider>
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );
