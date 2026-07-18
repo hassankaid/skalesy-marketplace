@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Menu } from "lucide-react";
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
+import { ThemeToggle } from "./theme-toggle";
 import { LogoLockup } from "@/components/brand/logo";
 import type { UserRole } from "@/lib/constants";
 
@@ -34,7 +35,7 @@ export function Topbar({
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 lg:px-6">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={<Button variant="ghost" size="icon" className="lg:hidden" />}
@@ -42,10 +43,13 @@ export function Topbar({
           <Menu className="size-5" />
           <span className="sr-only">Ouvrir le menu</span>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
-          <SheetHeader className="h-16 justify-center border-b px-5">
+        <SheetContent
+          side="left"
+          className="gradient-rail w-72 border-white/10 p-0 text-white"
+        >
+          <SheetHeader className="h-16 justify-center border-b border-white/10 px-5">
             <SheetTitle className="text-left">
-              <LogoLockup />
+              <LogoLockup variant="white" />
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto">
@@ -75,6 +79,7 @@ export function Topbar({
         )}
       </div>
 
+      <ThemeToggle />
       <UserMenu fullName={fullName} email={email} role={role} />
     </header>
   );
