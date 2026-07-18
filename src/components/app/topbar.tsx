@@ -52,7 +52,7 @@ export function Topbar({
               <LogoLockup variant="white" />
             </SheetTitle>
           </SheetHeader>
-          <div className="overflow-y-auto">
+          <div className="rail-scroll overflow-y-auto">
             <SidebarNav
               role={role}
               inboxCount={inboxCount}

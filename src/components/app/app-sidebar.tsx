@@ -19,7 +19,7 @@ export function AppSidebar({
       <div className="relative flex h-16 shrink-0 items-center border-b border-white/10 px-5">
         <LogoLockup variant="white" />
       </div>
-      <div className="relative flex-1 overflow-y-auto">
+      <div className="rail-scroll relative flex-1 overflow-y-auto">
         <SidebarNav role={role} inboxCount={inboxCount} />
       </div>
       <div className="relative shrink-0 border-t border-white/10 px-5 py-3">

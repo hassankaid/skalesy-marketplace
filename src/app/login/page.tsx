@@ -21,7 +21,6 @@ export default async function LoginPage({
     <AuthShell
       title="Connexion"
       description="Connecte-toi avec ton email et ton mot de passe."
-      footer="Accès réservé aux membres du projet."
     >
       <LoginForm redirectTo={redirectTo} />
     </AuthShell>
