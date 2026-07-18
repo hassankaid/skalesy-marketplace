@@ -181,8 +181,8 @@ function ActionRow({
         href={href}
         className="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Icon className="size-4 text-muted-foreground" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+          <Icon className="size-4" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium">{label}</span>

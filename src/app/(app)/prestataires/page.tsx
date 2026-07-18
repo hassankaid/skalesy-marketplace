@@ -5,7 +5,11 @@ import { PageHeader } from "@/components/app/page-header";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/app/empty-state";
 import { getWorkspaces, getTasks, getQuestions, getBlockers } from "@/lib/queries";
-import { PROVIDER_DOMAINS, type ProviderDomain } from "@/lib/constants";
+import {
+  PROVIDER_DOMAINS,
+  DOMAIN_CHIP_CLASS,
+  type ProviderDomain,
+} from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Prestataires" };
 
@@ -44,10 +48,15 @@ export default async function ProvidersPage() {
               <Link
                 key={w.id}
                 href={`/prestataires/${domain}`}
-                className="group flex flex-col rounded-xl border bg-card p-5 transition-all hover:border-foreground/15 hover:shadow-sm"
+                className="group flex flex-col rounded-2xl border border-border/70 bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-elevated"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                  <div
+                    className={
+                      "flex size-10 items-center justify-center rounded-xl " +
+                      DOMAIN_CHIP_CLASS[domain]
+                    }
+                  >
                     <Icon className="size-5" />
                   </div>
                   <div className="min-w-0 flex-1">

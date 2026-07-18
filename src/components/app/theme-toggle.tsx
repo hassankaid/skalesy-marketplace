@@ -1,35 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/** Light/dark switch for the topbar. Renders a stable placeholder until mounted. */
+/**
+ * Light/dark switch. The icon swaps purely via the `.dark` class (set by
+ * next-themes before paint), so there's no mount flag and no hydration flash.
+ */
 export function ThemeToggle({ className }: { className?: string }) {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const isDark = resolvedTheme === "dark";
+  const { setTheme, resolvedTheme } = useTheme();
 
   return (
     <Button
       variant="ghost"
       size="icon"
       className={className}
-      aria-label={isDark ? "Passer au thème clair" : "Passer au thème sombre"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label="Changer de thème (clair / sombre)"
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
-      {mounted ? (
-        isDark ? (
-          <Sun className="size-4.5" />
-        ) : (
-          <Moon className="size-4.5" />
-        )
-      ) : (
-        <Sun className="size-4.5 opacity-0" />
-      )}
+      <Sun className="hidden size-4.5 dark:block" />
+      <Moon className="block size-4.5 dark:hidden" />
     </Button>
   );
 }

@@ -49,8 +49,21 @@ Plateforme interne de pilotage projet (Skalesy / client / prestataires). Next.js
 - **Auth/rôles** : `src/lib/auth.ts` (`getAuth`, `requireAuth`). Rôles `skalesy_admin` / `client`
   / `provider`. La **RLS Postgres est la source de vérité** ; le gating UI n'est que cosmétique.
 - **Constantes métier** (domaines, statuts, libellés FR, classes de badges) : `src/lib/constants.ts`.
-- **Design** : thème clair premium, accent violet `--color-brand` (#6C63FF), statuts sémantiques.
-  Composants partagés dans `src/components/app/` (badges, SectionCard, StatCard, EmptyState…).
+- **Design (identité Skalesy)** : deux thèmes soignés **clair + sombre** (`next-themes`, classe `.dark`,
+  bascule `ThemeToggle` dans la topbar). Police de marque **Sofia Pro** auto-hébergée (`next/font/local`,
+  `src/fonts/sofia-pro/`) sur toute l'UI. Accent = **violet identité** `--color-brand` (#7A0A8A, teinte ~325°) ;
+  **dégradé signature** violet→magenta→orange exposé en utilitaires `.gradient-brand` / `.gradient-rail` /
+  `.gradient-brand-soft` (+ `.text-gradient-brand`). Profondeur via `.shadow-card` / `.shadow-elevated` /
+  `.shadow-pop` (tokens `--shadow-*` par thème). Tous les tokens dans `src/app/globals.css`.
+- **Rail de marque** : la sidebar (`app-sidebar.tsx`) est un rail en `.gradient-rail` avec nav blanche
+  (actif = pilule verre dépoli). Le même rail sert au Sheet mobile. Logo réel : `src/components/brand/logo.tsx`
+  (`LogoMark` = badge circulaire dégradé + `sK`, `Logo`/`LogoWordmark` = wordmark PNG theme-aware) ;
+  assets dans `public/brand/`, favicon `src/app/icon.png`.
+- **Badges/statuts theme-aware** : palette `TINT` + `CHIP` dans `src/lib/constants.ts` (une classe = clair **et** sombre,
+  chaînes littérales pour le JIT). Toutes les maps de statut (task/priority/access/question/décision/blocage/roadmap)
+  et les couleurs par domaine (`DOMAIN_BADGE_CLASS` / `DOMAIN_CHIP_CLASS`) y sont centralisées — **ne jamais**
+  recréer de couleurs de statut en dur dans une page. Composants partagés dans `src/components/app/`
+  (badges, SectionCard, StatCard, EmptyState, PageHeader, ProgressRing…).
 
 ## Base de données
 

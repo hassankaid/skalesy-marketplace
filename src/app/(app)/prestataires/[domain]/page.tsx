@@ -21,6 +21,8 @@ import {
 import {
   QUESTION_STATUS_LABELS,
   BLOCKER_STATUS_LABELS,
+  BLOCKER_STATUS_BADGE_CLASS,
+  DOMAIN_CHIP_CLASS,
   PROVIDER_DOMAINS,
   PROVIDER_DOMAIN_ORDER,
   type ProviderDomain,
@@ -79,10 +81,15 @@ export default async function ProviderDetailPage({
       </Link>
 
       {/* Header */}
-      <section className="rounded-xl border bg-card p-6">
+      <section className="rounded-2xl border border-border/70 bg-card p-6 shadow-card">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <div
+              className={
+                "flex size-12 items-center justify-center rounded-xl " +
+                DOMAIN_CHIP_CLASS[domain]
+              }
+            >
               <Icon className="size-6" />
             </div>
             <div>
@@ -200,11 +207,7 @@ export default async function ProviderDetailPage({
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-medium">{b.title}</p>
                     <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                        b.status === "open"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${BLOCKER_STATUS_BADGE_CLASS[b.status]}`}
                     >
                       {BLOCKER_STATUS_LABELS[b.status]}
                     </span>
@@ -234,7 +237,7 @@ function InfoCard({
   text: string | null | undefined;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
+    <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-card">
       <div className="mb-2 flex items-center gap-2">
         <Icon className="size-4 text-brand" />
         <h3 className="text-sm font-semibold">{title}</h3>

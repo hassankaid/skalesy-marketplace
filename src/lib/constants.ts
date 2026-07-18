@@ -17,7 +17,16 @@ import {
  * carries a `dark:` variant so a single class works in both themes.
  */
 export const TINT: Record<
-  "slate" | "amber" | "red" | "blue" | "emerald" | "orange" | "sky" | "brand",
+  | "slate"
+  | "amber"
+  | "red"
+  | "blue"
+  | "emerald"
+  | "orange"
+  | "sky"
+  | "violet"
+  | "rose"
+  | "brand",
   string
 > = {
   slate:
@@ -31,8 +40,24 @@ export const TINT: Record<
   orange:
     "bg-orange-50 text-orange-700 ring-1 ring-orange-600/15 dark:bg-orange-400/10 dark:text-orange-300 dark:ring-orange-400/25",
   sky: "bg-sky-50 text-sky-700 ring-1 ring-sky-600/15 dark:bg-sky-400/10 dark:text-sky-300 dark:ring-sky-400/25",
+  violet:
+    "bg-violet-50 text-violet-700 ring-1 ring-violet-600/15 dark:bg-violet-400/10 dark:text-violet-300 dark:ring-violet-400/25",
+  rose: "bg-rose-50 text-rose-700 ring-1 ring-rose-600/15 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/25",
   brand:
     "bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-600/15 dark:bg-fuchsia-400/10 dark:text-fuchsia-300 dark:ring-fuchsia-400/25",
+};
+
+/** Solid icon-chip tints per accent (bigger surfaces: provider tiles, list rows). */
+export const CHIP: Record<
+  "blue" | "violet" | "amber" | "rose" | "emerald" | "sky",
+  string
+> = {
+  blue: "bg-blue-500/12 text-blue-600 dark:text-blue-400",
+  violet: "bg-violet-500/12 text-violet-600 dark:text-violet-400",
+  amber: "bg-amber-500/12 text-amber-600 dark:text-amber-400",
+  rose: "bg-rose-500/12 text-rose-600 dark:text-rose-400",
+  emerald: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400",
+  sky: "bg-sky-500/12 text-sky-600 dark:text-sky-400",
 };
 
 /* ------------------------------------------------------------------ */
@@ -102,6 +127,23 @@ export const PROVIDER_DOMAIN_ORDER: ProviderDomain[] = [
   "paid_acquisition",
   "seo",
 ];
+
+/** Per-domain accent so each métier is instantly recognisable (badges + chips). */
+export const DOMAIN_BADGE_CLASS: Record<ProviderDomain, string> = {
+  dev: TINT.blue,
+  design: TINT.violet,
+  branding: TINT.amber,
+  paid_acquisition: TINT.rose,
+  seo: TINT.emerald,
+};
+
+export const DOMAIN_CHIP_CLASS: Record<ProviderDomain, string> = {
+  dev: CHIP.blue,
+  design: CHIP.violet,
+  branding: CHIP.amber,
+  paid_acquisition: CHIP.rose,
+  seo: CHIP.emerald,
+};
 
 /* ------------------------------------------------------------------ */
 /* Owner side (qui doit agir)                                          */

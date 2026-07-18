@@ -77,7 +77,10 @@ export default async function ClientPage() {
             ) : (
               <ul className="divide-y">
                 {actions.map((t) => (
-                  <li key={t.id} className="flex items-center gap-3 px-5 py-3">
+                  <li
+                    key={t.id}
+                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{t.title}</p>
                       {t.description && (
@@ -116,7 +119,10 @@ export default async function ClientPage() {
               ) : (
                 <ul className="divide-y">
                   {clientQuestions.map((q) => (
-                    <li key={q.id} className="px-5 py-3">
+                    <li
+                      key={q.id}
+                      className="px-5 py-3 transition-colors hover:bg-muted/40"
+                    >
                       <p className="text-sm font-medium">
                         <MentionText text={q.body} />
                       </p>
@@ -151,7 +157,7 @@ export default async function ClientPage() {
                   {toProvide.map((a) => (
                     <li
                       key={a.id}
-                      className="flex items-center gap-3 px-5 py-3"
+                      className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{a.name}</p>
@@ -187,7 +193,7 @@ export default async function ClientPage() {
                 {toValidate.map((d) => (
                   <li
                     key={d.id}
-                    className="flex items-start justify-between gap-3 px-5 py-3"
+                    className="flex items-start justify-between gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{d.title}</p>

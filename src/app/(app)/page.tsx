@@ -14,7 +14,6 @@ import {
   getTasks,
   getQuestions,
   getBlockers,
-  getAccesses,
   getWorkspaces,
   getActivity,
 } from "@/lib/queries";
@@ -27,7 +26,11 @@ import { ProgressRing } from "@/components/app/progress-ring";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProjectSettingsDialog } from "@/components/cockpit/project-settings-dialog";
 import { getAuth } from "@/lib/auth";
-import { PROVIDER_DOMAINS, type ProviderDomain } from "@/lib/constants";
+import {
+  PROVIDER_DOMAINS,
+  DOMAIN_CHIP_CLASS,
+  type ProviderDomain,
+} from "@/lib/constants";
 import { formatDate, dueState, DUE_STATE_CLASS } from "@/lib/format";
 
 function initials(name: string | null) {
@@ -41,13 +44,12 @@ function initials(name: string | null) {
 }
 
 export default async function DashboardPage() {
-  const [project, tasks, questions, blockers, accesses, workspaces, activity, auth] =
+  const [project, tasks, questions, blockers, workspaces, activity, auth] =
     await Promise.all([
       getProject(),
       getTasks(),
       getQuestions(),
       getBlockers(),
-      getAccesses(),
       getWorkspaces(),
       getActivity(8),
       getAuth(),
@@ -320,7 +322,9 @@ export default async function DashboardPage() {
                       href={`/prestataires/${w.domain}`}
                       className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
                     >
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                      <div
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${DOMAIN_CHIP_CLASS[w.domain as ProviderDomain]}`}
+                      >
                         <Icon className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">

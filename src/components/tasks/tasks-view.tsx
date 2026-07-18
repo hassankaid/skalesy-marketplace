@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { LayoutGrid, Table2, CalendarClock } from "lucide-react";
 import { StatusBadge, PriorityBadge, DomainBadge, OwnerBadge } from "@/components/app/badges";
 import { EmptyState } from "@/components/app/empty-state";
@@ -68,49 +67,44 @@ export function TasksView({
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Pill active={status === "all"} onClick={() => setStatus("all")}>
-            Toutes
-            <span className="ml-1 text-muted-foreground">{tasks.length}</span>
-          </Pill>
-          {TASK_STATUS_ORDER.map((s) => {
-            const n = tasks.filter((t) => t.status === s).length;
-            return (
-              <Pill key={s} active={status === s} onClick={() => setStatus(s)}>
-                {TASK_STATUS_LABELS[s]}
-                <span className="ml-1 text-muted-foreground">{n}</span>
-              </Pill>
-            );
-          })}
-          <div className="ml-auto inline-flex rounded-lg border bg-card p-0.5">
-            <ViewButton
-              active={view === "table"}
-              onClick={() => setView("table")}
-              icon={Table2}
-              label="Tableau"
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="max-w-full overflow-x-auto">
+            <Segmented
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "all", label: "Toutes", count: tasks.length },
+                ...TASK_STATUS_ORDER.map((s) => ({
+                  value: s as StatusFilter,
+                  label: TASK_STATUS_LABELS[s],
+                  count: tasks.filter((t) => t.status === s).length,
+                })),
+              ]}
             />
-            <ViewButton
-              active={view === "board"}
-              onClick={() => setView("board")}
-              icon={LayoutGrid}
-              label="Kanban"
+          </div>
+          <div className="ml-auto">
+            <Segmented
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "table", label: "Tableau", icon: Table2 },
+                { value: "board", label: "Kanban", icon: LayoutGrid },
+              ]}
             />
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Pill active={domain === "all"} onClick={() => setDomain("all")} subtle>
-            Tous les domaines
-          </Pill>
-          {PROVIDER_DOMAIN_ORDER.map((d) => (
-            <Pill
-              key={d}
-              active={domain === d}
-              onClick={() => setDomain(d)}
-              subtle
-            >
-              {PROVIDER_DOMAINS[d].short}
-            </Pill>
-          ))}
+        <div className="max-w-full overflow-x-auto">
+          <Segmented
+            value={domain}
+            onChange={setDomain}
+            options={[
+              { value: "all", label: "Tous les domaines" },
+              ...PROVIDER_DOMAIN_ORDER.map((d) => ({
+                value: d as DomainFilter,
+                label: PROVIDER_DOMAINS[d].short,
+              })),
+            ]}
+          />
         </div>
       </div>
 
@@ -129,59 +123,48 @@ export function TasksView({
   );
 }
 
-function Pill({
-  active,
-  onClick,
-  children,
-  subtle,
+/**
+ * Contrôle segmenté premium partagé par les filtres (statut / domaine) et le
+ * toggle de vue. Générique sur la valeur pour rester typé (StatusFilter,
+ * DomainFilter, "table" | "board").
+ */
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  subtle?: boolean;
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string; count?: number; icon?: typeof Table2 }[];
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors",
-        active
-          ? subtle
-            ? "bg-foreground text-background"
-            : "bg-primary text-primary-foreground"
-          : "border bg-card text-foreground/70 hover:bg-muted",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function ViewButton({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: typeof Table2;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
-        active ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      <Icon className="size-4" />
-      <span className="hidden sm:inline">{label}</span>
-    </button>
+    <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/50 p-0.5">
+      {options.map((opt) => {
+        const active = opt.value === value;
+        const Icon = opt.icon;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-colors",
+              active
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {Icon && <Icon className="size-4" />}
+            {opt.label}
+            {opt.count != null && (
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {opt.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -195,7 +178,7 @@ function TaskTable({
   canEdit: (t: TaskRow) => boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -283,7 +266,10 @@ function TaskBoard({
       {TASK_STATUS_ORDER.map((s) => {
         const items = tasks.filter((t) => t.status === s);
         return (
-          <div key={s} className="flex flex-col rounded-xl border bg-muted/30">
+          <div
+            key={s}
+            className="flex flex-col rounded-2xl border border-border/70 bg-muted/30"
+          >
             <div className="flex items-center justify-between px-3 py-2.5">
               <StatusBadge status={s} />
               <span className="text-xs font-medium tabular-nums text-muted-foreground">
@@ -296,7 +282,7 @@ function TaskBoard({
                 return (
                   <div
                     key={t.id}
-                    className="rounded-lg border bg-card p-3 shadow-sm"
+                    className="rounded-xl border border-border/70 bg-card p-3 shadow-card"
                   >
                     <p className="text-sm font-medium leading-snug">{t.title}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">

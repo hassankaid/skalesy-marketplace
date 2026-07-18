@@ -91,7 +91,7 @@ export function MentionNotification({
         )}
         aria-hidden
       />
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/12 text-xs font-semibold text-fuchsia-700 dark:text-fuchsia-300">
         {initials(actorName)}
       </span>
       <span className="min-w-0 flex-1">

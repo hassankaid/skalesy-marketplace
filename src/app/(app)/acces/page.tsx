@@ -70,7 +70,10 @@ export default async function AccessPage() {
             ) : (
               <ul className="divide-y">
                 {accesses.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 px-5 py-3">
+                  <li
+                    key={a.id}
+                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{a.name}</p>
                       {a.description && (
@@ -116,9 +119,12 @@ export default async function AccessPage() {
                   const hasLink = d.url && d.url !== "#";
                   const canDelete = isAdmin || d.uploaded_by === userId;
                   return (
-                    <li key={d.id} className="flex items-center gap-3 px-5 py-3">
-                      <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
-                        <FileText className="size-4 text-muted-foreground" />
+                    <li
+                      key={d.id}
+                      className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                        <FileText className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{d.name}</p>

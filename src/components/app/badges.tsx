@@ -6,6 +6,7 @@ import {
   PRIORITY_LABELS,
   PRIORITY_BADGE_CLASS,
   PROVIDER_DOMAINS,
+  DOMAIN_BADGE_CLASS,
   OWNER_SIDE_LABELS,
   TINT,
   type TaskStatus,
@@ -81,11 +82,12 @@ export function DomainBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground/80 whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        DOMAIN_BADGE_CLASS[domain],
         className,
       )}
     >
-      {withIcon && <Icon className="size-3.5 text-muted-foreground" />}
+      {withIcon && <Icon className="size-3.5" />}
       {d.short}
     </span>
   );

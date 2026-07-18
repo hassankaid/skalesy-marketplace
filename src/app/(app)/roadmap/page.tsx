@@ -7,19 +7,16 @@ import { DomainBadge } from "@/components/app/badges";
 import { RoadmapStatusMenu } from "@/components/cockpit/roadmap-status-menu";
 import { NewRoadmapDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
-import { type RoadmapStatus } from "@/lib/constants";
+import {
+  ROADMAP_STATUS_DOT_CLASS,
+  type RoadmapStatus,
+} from "@/lib/constants";
 import { getRoadmap } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import type { RoadmapRow } from "@/lib/database.types";
 
 export const metadata: Metadata = { title: "Roadmap" };
-
-const DOT: Record<RoadmapStatus, string> = {
-  planned: "bg-slate-300",
-  in_progress: "bg-blue-500",
-  done: "bg-emerald-500",
-};
 
 export default async function RoadmapPage() {
   const [items, auth] = await Promise.all([getRoadmap(), getAuth()]);
@@ -58,7 +55,7 @@ export default async function RoadmapPage() {
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 {g.phase}
               </h2>
-              <ol className="relative space-y-3 border-l pl-6">
+              <ol className="relative space-y-3 pl-6 before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-border">
                 {g.items.map((it) => {
                   const status = it.status as RoadmapStatus;
                   return (
@@ -66,10 +63,10 @@ export default async function RoadmapPage() {
                       <span
                         className={cn(
                           "absolute -left-[1.625rem] top-1.5 size-3 rounded-full ring-4 ring-background",
-                          DOT[status],
+                          ROADMAP_STATUS_DOT_CLASS[status],
                         )}
                       />
-                      <div className="rounded-xl border bg-card p-4">
+                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-elevated">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold">{it.title}</p>
                           <div className="flex shrink-0 items-center gap-1">

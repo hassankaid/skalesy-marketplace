@@ -107,7 +107,7 @@ export function MentionText({ text }: { text: string }) {
         ) : (
           <span
             key={p.key}
-            className="rounded bg-brand/10 px-1 font-medium text-brand"
+            className="rounded bg-brand/12 px-1 font-medium text-fuchsia-700 dark:text-fuchsia-300"
           >
             @{p.name}
           </span>
@@ -240,7 +240,7 @@ export function MentionTextarea({
                   i === active ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
                 )}
               >
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[10px] font-semibold text-brand">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/12 text-[10px] font-semibold text-fuchsia-700 dark:text-fuchsia-300">
                   {initials(m.name)}
                 </span>
                 <span className="truncate">{m.name}</span>

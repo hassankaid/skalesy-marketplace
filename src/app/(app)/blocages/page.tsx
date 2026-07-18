@@ -8,6 +8,7 @@ import { BlockerActions } from "@/components/cockpit/blocker-actions";
 import { NewBlockerDialog } from "@/components/cockpit/create-dialogs";
 import { DeleteButton } from "@/components/cockpit/delete-button";
 import { MentionText } from "@/components/cockpit/mentions";
+import { BLOCKER_STATUS_LABELS, BLOCKER_STATUS_BADGE_CLASS } from "@/lib/constants";
 import { getBlockers } from "@/lib/queries";
 import { getAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
@@ -56,7 +57,7 @@ export default async function BlockersPage() {
         ) : (
           <ul className="divide-y">
             {open.map((b) => (
-              <li key={b.id} className="flex gap-3 px-5 py-4">
+              <li key={b.id} className="flex gap-3 px-5 py-4 transition-colors hover:bg-muted/40">
                 <OctagonAlert className="mt-0.5 size-4 shrink-0 text-red-500" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
@@ -91,11 +92,13 @@ export default async function BlockersPage() {
         <SectionCard title="Blocages résolus" noPadding>
           <ul className="divide-y">
             {resolved.map((b) => (
-              <li key={b.id} className="px-5 py-4">
+              <li key={b.id} className="px-5 py-4 transition-colors hover:bg-muted/40">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-medium">{b.title}</p>
-                  <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                    Résolu
+                  <span
+                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${BLOCKER_STATUS_BADGE_CLASS[b.status]}`}
+                  >
+                    {BLOCKER_STATUS_LABELS[b.status]}
                   </span>
                 </div>
                 {b.resolution && (
